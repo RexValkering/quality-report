@@ -185,7 +185,7 @@ class CheckmarxTest(unittest.TestCase):
     @patch.object(time, 'sleep')
     def test_obtain_issue_ssast_report_not_created(self, mock_sleep, mock_error, mock_url_read):
         """ Test that issues are correctly obtained. """
-        mock_url_read.side_effect = [LAST_SCAN, '{"reportId": 22}'] + ['{"status": {"value": "InProgress"}}'] * 5
+        mock_url_read.side_effect = [LAST_SCAN, '{"reportId": 22}'] + ['{"status": {"value": "InProgress"}}'] * 10
         self.__report.obtain_issues(['id'], 'high')
 
         issues = self.__report.issues()

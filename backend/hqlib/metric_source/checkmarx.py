@@ -51,6 +51,10 @@ class Checkmarx(MetricSourceWithIssues):
 
     def __init__(self, url: str, username: str, password: str, *args, **kwargs) -> None:
         self._sast_report_id = 0
+        self._projects_url = urllib.parse.urljoin(url, 'CxRestAPI/projects')
+        self._scan_url = urllib.parse.urljoin(url, '/CxRestAPI/sast/scans?projectId={project_id}&last=1')
+        self._statistics_url = urllib.parse.urljoin(url, '/CxRestAPI/sast/scans/{id}/resultsStatistics')
+
         self._last_scan_url = urllib.parse.urljoin(
             url, '/Cxwebinterface/odata/v1/Projects?$expand=LastScan&$filter=Name%20eq%20%27{project_name}%27')
         self._token_url = urllib.parse.urljoin(url, '/cxrestapi/auth/identity/connect/token')
@@ -99,11 +103,12 @@ class Checkmarx(MetricSourceWithIssues):
 
         for project_name in report_urls:
             try:
-                last_scan_json = self._fetch_last_scan(project_name)
+                project_id = self._fetch_project_id(project_name)
+                last_scan_json = self._fetch_last_scan(project_id)
                 checkmarx_report_urls.append(urllib.parse.urljoin(
                     self.url(),
                     "/CxWebClient/ViewerMain.aspx?scanId={}&ProjectID={}"
-                    .format(str(last_scan_json["Id"]), str(last_scan_json["ProjectId"]))))
+                    .format(str(last_scan_json["id"]), str(last_scan_json["project"]["id"]))))
             except (IndexError, KeyError, TypeError) as reason:
                 logging.error("Couldn't load values from json: %s - %s", project_name, reason)
             except url_opener.UrlOpener.url_open_exceptions:
@@ -116,8 +121,10 @@ class Checkmarx(MetricSourceWithIssues):
         nr_alerts = 0
         for project_name in metric_source_ids:
             try:
-                last_scan_json = self._fetch_last_scan(project_name)
-                nr_alerts += last_scan_json[priority.title()]
+                project_id = self._fetch_project_id(project_name)
+                last_scan_id = self._fetch_last_scan(project_id)[0]["id"]
+                statistics_json = self._fetch_statistics(last_scan_id)
+                nr_alerts += statistics_json[priority.lower()+'Severity']
             except url_opener.UrlOpener.url_open_exceptions:
                 return -1
             except (KeyError, IndexError) as reason:
@@ -169,13 +176,19 @@ class Checkmarx(MetricSourceWithIssues):
         self._issues = []
         for project_name in metric_source_ids:
             try:
-                last_scan_id = self._fetch_last_scan(project_name)['Id']
+                project_id = self._fetch_project_id(project_name)
+
+                last_scan_id = self._fetch_last_scan(project_id)[0]["id"]
+                self._fetch_statistics(last_scan_id)
+
+                #last_scan_id = self._fetch_last_scan(project_name)['Id']
                 logging.info("Retrieved last scan id: %s.", last_scan_id)
 
                 self._sast_report_id = self._create_report(last_scan_id)
                 logging.info("Retrieved SAST report id %s for scan with id %s.", self._sast_report_id, last_scan_id)
 
                 self._wait_for_sast_report()
+                logging.info("SAST report with id %s for scan with id %s created successfully.", self._sast_report_id, last_scan_id)
                 self._issues = self._get_issues_from_report(self._sast_report_id, priority)
             except url_opener.UrlOpener.url_open_exceptions:
                 pass
@@ -188,7 +201,8 @@ class Checkmarx(MetricSourceWithIssues):
             except self.SastReportNotCreated:
                 logging.error('SAST report is not created on the Checkmarx server!')
 
-    def _wait_for_sast_report(self, repeat_nr: int = 5, wait_seconds: int = 3):
+    def _wait_for_sast_report(self, repeat_nr: int = 10, wait_seconds: int = 5):
+        time.sleep(1)
         while self.__get_json(self._sast_scan_status_url.format(scan_id=self._sast_report_id),
                               self._token_authorised_url_open)["status"]["value"] != "Created":
             self._token_authorised_url_open.url_read.cache_clear()
@@ -197,7 +211,7 @@ class Checkmarx(MetricSourceWithIssues):
                 raise self.SastReportNotCreated()
             logging.info(
                 "SAST report with id %s is still not created. "
-                "Next check in %s second(s). There are %s attempts left",
+                "Next check in %s second(s). There are %s attempts remaining before giving up.",
                 self._sast_report_id, wait_seconds, repeat_nr)
             time.sleep(wait_seconds)
 
@@ -206,7 +220,8 @@ class Checkmarx(MetricSourceWithIssues):
         dates = []
         for project_name in metric_source_ids:
             try:
-                last_scan_json = self._fetch_last_scan(project_name)
+                project_id = self._fetch_project_id(project_name)
+                last_scan_json = self._fetch_last_scan(project_id)
                 dates.append(self.__parse_datetime(last_scan_json))
             except url_opener.UrlOpener.url_open_exceptions:
                 return datetime.datetime.min
@@ -220,9 +235,9 @@ class Checkmarx(MetricSourceWithIssues):
     def __parse_datetime(json_object: Dict) -> DateTime:
         """ Parse the JSON to get the date and time of the last scan. """
         datetimes = []
-        datetime_string = json_object["ScanCompletedOn"].split('.')[0]
+        datetime_string = json_object[0]["dateAndTime"]["finishedOn"].split('.')[0]
         datetimes.append(dateutil.parser.parse(datetime_string, ignoretz=True))
-        comment = json_object.get("Comment", "")
+        comment = json_object[0].get("comment", "")
         comment_sep, prefix, postfix = '; ', 'Attempt to perform scan on ', ' - No code changes were detected'
         if comment_sep in comment:
             for check in comment.strip(comment_sep).split(comment_sep):
@@ -232,16 +247,25 @@ class Checkmarx(MetricSourceWithIssues):
         return max(datetimes, default=datetime.datetime.min)
 
     @functools.lru_cache(maxsize=1024)
-    def _fetch_last_scan(self, project_name: str) -> Dict[str, int]:
+    def _fetch_project_id(self, project_name: str) -> int:
+        projects = self.__get_json(self._projects_url)
+        return next(project['id'] for project in projects if project['name'] == project_name)
+
+    def _fetch_statistics(self, scan_id: int) -> Dict[str, int]:
+        return self.__get_json(self._statistics_url.format(id=scan_id))
+
+    @functools.lru_cache(maxsize=1024)
+    def _fetch_last_scan(self, project_d: int) -> Dict[str, int]:
         """ Create the api URL and fetch the report from it. """
-        api_url = self._last_scan_url.format(project_name=urllib.parse.quote(project_name))
-        return self.__get_json(api_url)["value"][0]["LastScan"]
+        return self.__get_json(self._scan_url.format(project_id=project_d))
+
+#_scan_url
 
     def __get_json(self, api_url: str, opener: url_opener.UrlOpener = None) -> Dict:
         """ Return and evaluate the JSON at the url using Basic Authentication. """
 
         if opener is None:
-            opener = self._url_open
+            opener = self._token_authorised_url_open
         json_string = opener.url_read(api_url)
 
         return utils.eval_json(json_string)
