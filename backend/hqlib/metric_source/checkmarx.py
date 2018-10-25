@@ -108,8 +108,9 @@ class Checkmarx(MetricSourceWithIssues):
                     self.url(),
                     "/CxWebClient/ViewerMain.aspx?scanId={}&ProjectID={}"
                     .format(str(last_scan_id), str(project_id))))
-            except (IndexError, KeyError, TypeError) as reason:
+            except (IndexError, KeyError) as reason:
                 logging.error("Couldn't load values from json: %s - %s", project_name, reason)
+                return [self.url()]
             except url_opener.UrlOpener.url_open_exceptions:
                 return [self.url()]
         return checkmarx_report_urls
@@ -222,7 +223,7 @@ class Checkmarx(MetricSourceWithIssues):
                 dates.append(self.__parse_datetime(last_scan_json))
             except url_opener.UrlOpener.url_open_exceptions:
                 return datetime.datetime.min
-            except (KeyError, IndexError) as reason:
+            except (KeyError, IndexError, ValueError) as reason:
                 logging.error("Couldn't parse date and time for project %s from %s: %s",
                               project_name, self.url(), reason)
                 return datetime.datetime.min

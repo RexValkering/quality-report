@@ -320,8 +320,28 @@ class CheckmarxTest(unittest.TestCase):
 
     def test_metric_source_urls(self, mock_url_read):
         """ Test the metric source urls with one metric id. """
-        mock_url_read.return_value = LAST_SCAN
-        self.assertEqual([], self.__report.metric_source_urls('id'))
+        mock_url_read.side_effect = [PROJECTS, LAST_SCAN]
+        self.assertEqual(['http://url/CxWebClient/ViewerMain.aspx?scanId=10111&ProjectID=22'],
+                         self.__report.metric_source_urls('id2'))
+
+    @patch.object(logging, 'error')
+    def test_metric_source_urls_key_error(self, mock_error, mock_url_read):
+        """ Test the metric source urls with empty scan response.. """
+        mock_url_read.side_effect = [PROJECTS, '{}']
+        self.assertEqual(["http://url/"], self.__report.metric_source_urls('id2'))
+        self.assertEqual(mock_error.call_args_list[0][0][0], "Couldn't load values from json: %s - %s")
+        self.assertEqual(mock_error.call_args_list[0][0][1], 'id2')
+        self.assertIsInstance(mock_error.call_args_list[0][0][2], KeyError)
+
+    @patch.object(logging, 'error')
+    def test_metric_source_urls_index_error(self, mock_error, mock_url_read):
+        """ Test the metric source urls with empty scan response.. """
+        mock_url_read.side_effect = [PROJECTS, '[]']
+        self.assertEqual(["http://url/"], self.__report.metric_source_urls('id2'))
+
+        self.assertEqual(mock_error.call_args_list[0][0][0], "Couldn't load values from json: %s - %s")
+        self.assertEqual(mock_error.call_args_list[0][0][1], 'id2')
+        self.assertIsInstance(mock_error.call_args_list[0][0][2], IndexError)
 
     def test_metric_source_urls_on_error(self, mock_url_read):
         """ Test the metric source urls when an error occurs. """
@@ -355,10 +375,35 @@ class CheckmarxTest(unittest.TestCase):
             call('http://url/CxRestAPI/sast/scans?projectId=22&last=1')
         ], mock_url_read.call_args_list)
 
-    def test_datetime_missing(self, mock_url_read):
+    @patch.object(logging, 'error')
+    def test_datetime_missing(self, mock_error, mock_url_read):
         """ Test a missing date and time of the report. """
         mock_url_read.side_effect = [PROJECTS, '[{"id": 202222}]']
         self.assertEqual(datetime.datetime.min, self.__report.datetime('id2'))
+        self.assertEqual(mock_error.call_args_list[0][0][0], "Couldn't parse date and time for project %s from %s: %s")
+        self.assertEqual(mock_error.call_args_list[0][0][1], 'id2')
+        self.assertEqual(mock_error.call_args_list[0][0][2], 'http://url/')
+        self.assertIsInstance(mock_error.call_args_list[0][0][3], KeyError)
+
+    @patch.object(logging, 'error')
+    def test_datetime_empty_scan(self, mock_error, mock_url_read):
+        """ Test a missing scan data. """
+        mock_url_read.side_effect = [PROJECTS, '[]']
+        self.assertEqual(datetime.datetime.min, self.__report.datetime('id2'))
+        self.assertEqual(mock_error.call_args_list[0][0][0], "Couldn't parse date and time for project %s from %s: %s")
+        self.assertEqual(mock_error.call_args_list[0][0][1], 'id2')
+        self.assertEqual(mock_error.call_args_list[0][0][2], 'http://url/')
+        self.assertIsInstance(mock_error.call_args_list[0][0][3], IndexError)
+
+    @patch.object(logging, 'error')
+    def test_datetime_format_error(self, mock_error, mock_url_read):
+        """ Test a invalid date and time of the report. """
+        mock_url_read.side_effect = [PROJECTS, '[{"id": 3, "dateAndTime": {"finishedOn": "2017-40-24T20:00:47.553"}}]']
+        self.assertEqual(datetime.datetime.min, self.__report.datetime('id2'))
+        self.assertEqual(mock_error.call_args_list[0][0][0], "Couldn't parse date and time for project %s from %s: %s")
+        self.assertEqual(mock_error.call_args_list[0][0][1], 'id2')
+        self.assertEqual(mock_error.call_args_list[0][0][2], 'http://url/')
+        self.assertIsInstance(mock_error.call_args_list[0][0][3], ValueError)
 
     @patch.object(logging, 'error')
     def test_nr_warnings_on_missing_values(self, mock_error, mock_url_read):
