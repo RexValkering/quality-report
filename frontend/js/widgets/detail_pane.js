@@ -265,13 +265,13 @@ class TablePanel extends React.Component {
         }
     }
 
-    formatLink(cell_content) {
+    formatLink(cell_content, key) {
         if (cell_content.hasOwnProperty('href')) {
-            return <a href={cell_content.href} target="_blank">{cell_content.text || cell_content.href}</a>
+            return <a href={cell_content.href} key={'href_' + key} target="_blank">{cell_content.text || cell_content.href}</a>
         }
 
         if (cell_content.length > 80) {
-            return <div className="long_text" data-toggle="tooltip" title={cell_content}>{cell_content}</div>
+            return <div className="long_text"  key={'div_' + key} data-toggle="tooltip" title={cell_content}>{cell_content}</div>
         }
 
         return cell_content;
@@ -284,7 +284,7 @@ class TablePanel extends React.Component {
         }
 
         return cell_content.map(
-            (c, i, content) => content[i + 1] ? [this.formatLink(c), ', '] : this.formatLink(c)
+            (c, i, content) => content[i + 1] ? [this.formatLink(c, i), ', '] : this.formatLink(c, i)
         );
     }
 
