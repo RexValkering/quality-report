@@ -2,7 +2,7 @@
 Copyright 2012-2018 Ministerie van Sociale Zaken en Werkgelegenheid
 
 Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
+you may not use this file exceppt in compliance with the License.
 You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
@@ -18,6 +18,7 @@ limitations under the License.
 import datetime
 from typing import List
 
+from hqlib import utils
 from hqlib.typing import DateTime
 from .abstract.backlog import Backlog
 
@@ -25,17 +26,33 @@ JQL_CONFIG = {
     "nr_user_stories": 'project = "{project}" AND type = Story',
     "approved_user_stories": 'project = "{project}" AND type = Story AND '
                              '"Ready status" = "<font color = \"#888720\"><b>Approved</b></font>"',
-    "reviewed_user_stories": 'project = "{project}" AND type = Story AND "Review comments" is not EMPTY',
-    "nr_user_stories_with_sufficient_ltcs": 'project = "{project}" AND type = Story',
+    "reviewed_user_stories": 'project = "{project}" AND type = Story AND "Ready status" is not EMPTY',
+
+    "number_of_storiers_with_expected_ltcs": 'project = "{}" AND type = Story AND issueFunction in '
+                                             'hasLinks("is tested by") AND  issueFunction in '
+                                             'aggregateExpression("number_ltcs", "customfield_10210.countBy{{it}}")',
+
+    "number_of_stories_with_specified_number_of_ltcs": 'project = "{}" AND type = Story AND '
+                                                       'issueFunction in hasLinks("is tested by") AND '
+                                                       '"Expected number of LTC\'s" = {}',
+
+    "number_of_ltcs_for_user_story": 'project = "{}" AND type = "Logical Test Case" AND issueFunction in '
+                                     'linkedIssuesOf("type = Story AND id = {}", "is tested by") AND '
+                                     'issueFunction in aggregateExpression("count", "creator.count({{it}})")',
+
+    "ltcs_for_user_story": 'project = "{project}" AND type = "Logical Test Case" '
+                           'AND issue in linkedIssues({story-id}, "is tested by")',
+
     "reviewed_ltcs": 'project = "{project}" AND type = "Logical Test Case" AND "Review comments" is not EMPTY',
+
     "nr_ltcs": 'project = "{project}" AND type = "Logical Test Case"',
-    "approved_ltcs": 'project = "{project}" AND type = "Logical Test Case" AND '
-                     '"Ready status" = "<font color = \"#888720\"><b>Approved</b></font>"',
+    "approved_ltcs": 'project = "{project}" AND type = "Logical Test Case" AND Approved = Yes',
+
     "nr_automated_ltcs": 'project = "{project}" AND type = "Logical Test Case" AND '
-                         '"Test execution" != "Automated" AND status = open',
+                         '"Test execution" = "Automated" AND status != open',
     "nr_ltcs_to_be_automated": 'project = "{project}" AND type = "Logical Test Case" AND '
                                '"Test execution" = "Automated" AND status = open',
-    "nr_manual_ltcs": 'project = "{project}" AND type = "Logical Test Case" AND "Test execution" = manual',
+    "nr_manual_ltcs": 'project = "{project}" AND type = "Logical Test Case" AND "Test execution" = Manual',
     "date_of_last_manual_test": '',
     "manual_test_execution_url": '',
     "nr_manual_ltcs_too_old": ''
@@ -64,9 +81,9 @@ class JiraBacklog(Backlog):
         """ Return the total number of user stories. """
         return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['nr_user_stories']))[0]
 
-    def __format_jql_list(self, jql) -> List[str]:
-        return [str(jql).format(project=self._project)] \
-            if not isinstance(jql, list) else [str(j).format(project=self._project) for j in jql]
+    def __format_jql_list(self, jql, param2: str = None) -> List[str]:
+        return [str(jql).format(self._project, param2)] \
+            if not isinstance(jql, list) else [str(j).format(self._project, param2) for j in jql]
 
     def approved_user_stories(self) -> int:
         """ Return the number of user stories that have been approved. """
@@ -78,8 +95,24 @@ class JiraBacklog(Backlog):
 
     def nr_user_stories_with_sufficient_ltcs(self) -> int:
         """ Return the number of user stories that have enough logical test cases. """
-        return self._number_of_issues_in_jql(*self.__format_jql_list(
-            self._jql_config['nr_user_stories_with_sufficient_ltcs']))[0]
+
+        from ..metric_source import Jira
+        jira =  Jira(self._url, self._username, self._password)
+
+        x = jira.get_agregate_jql_result(*self.__format_jql_list(self._jql_config['number_of_storiers_with_expected_ltcs']))['number_ltcs']
+        xxx = x[1:-1].split(',')
+
+        ret = []
+        for a in xxx:
+            ltcs = a.split(':')
+            if ltcs[0]:
+                bbb = jira.get_query(*self.__format_jql_list(*self.__format_jql_list(self._jql_config['number_of_stories_with_specified_number_of_ltcs'], ltcs[0])))
+                for w  in bbb['issues']:
+                    fff = jira.get_agregate_jql_result(
+                        *self.__format_jql_list(self._jql_config['number_of_ltcs_for_user_story'], w['key']))
+                    if fff['count'] >= ltcs[1]:
+                        ret.append(w)
+        return len(ret)
 
     def reviewed_ltcs(self) -> int:
         """ Return the number of reviewed logical test cases for the product. """

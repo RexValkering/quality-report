@@ -32,6 +32,15 @@ class Jira(object):
         self.__url = url + '/' if not url.endswith('/') else url
         self.__url_opener = url_opener.UrlOpener(username=username, password=password)
 
+    def get_agregate_jql_result(self, jql: str):
+        """ Function retrieves json result for a given jql query. """
+        read_url = self.__url + 'rest/scriptrunner-jira/latest/jqlfunctions/aggregateResult?jql=' + jql.replace(' ', '%20')
+        try:
+            return utils.eval_json(self.__url_opener.url_read(read_url))
+        except url_opener.UrlOpener.url_open_exceptions:
+            return None
+
+
     def get_query(self, query_id: QueryId) -> Optional[Mapping]:
         """ Get the JSON from the query and evaluate it. """
         query_url = self.get_query_url(query_id)
