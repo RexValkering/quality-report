@@ -78,7 +78,7 @@ class ActionPanel extends React.Component {
     render() {
         return (
             <div className="btn-group" role="group" aria-label="Action Panel">
-                <button type="button" id={this.props.metric_id} className="btn btn-default" data-toggle="tooltip" data-placement="right"
+                <button type="button" id={this.props.metric_id} className="btn btn-default black_border" data-toggle="tooltip" data-placement="right"
                     title="Gebruik het Toon-menu om verborgen metrieken weer zichtbaar te maken." onClick={this.props.onClick}>
                     Verberg deze metriek
                 </button>
