@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
 import urllib.parse
 from json import JSONDecodeError
 from typing import Optional, Mapping, Union
@@ -32,15 +33,6 @@ class Jira(object):
         self.__url = url + '/' if not url.endswith('/') else url
         self.__url_opener = url_opener.UrlOpener(username=username, password=password)
 
-    def get_agregate_jql_result(self, jql: str):
-        """ Function retrieves json result for a given jql query. """
-        read_url = self.__url + 'rest/scriptrunner-jira/latest/jqlfunctions/aggregateResult?jql=' + jql.replace(' ', '%20')
-        try:
-            return utils.eval_json(self.__url_opener.url_read(read_url))
-        except url_opener.UrlOpener.url_open_exceptions:
-            return None
-
-
     def get_query(self, query_id: QueryId) -> Optional[Mapping]:
         """ Get the JSON from the query and evaluate it. """
         query_url = self.get_query_url(query_id)
@@ -56,6 +48,18 @@ class Jira(object):
             return utils.eval_json(self.__url_opener.url_read(read_url))
         except url_opener.UrlOpener.url_open_exceptions:
             return None
+
+    def get_field_id(self, filed_name: str) -> Optional[str]:
+        """ Retrieves the id of a field for a given name """
+        try:
+            json_string = self.__url_opener.url_read(self.__url + 'rest/api/2/field')
+        except url_opener.UrlOpener.url_open_exceptions:
+            return None
+        for field in utils.eval_json(json_string):
+            if field['name'] == filed_name:
+                return field['id']
+        logging.error("Error retrieving id for the field with name %s.", filed_name)
+        return None
 
     def get_query_url(self, query_id: QueryId, search: bool = True) -> Optional[str]:
         """ Get the query url based on the query id. """
