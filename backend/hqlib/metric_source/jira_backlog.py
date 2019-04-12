@@ -103,11 +103,8 @@ class JiraBacklog(Backlog):
             for jql in jql_list:
                 stories += jira.get_query(jql)['issues']
 
-            ret = []
-            for story in stories:
-                if len(story['fields']['issuelinks']) >= story['fields'][expected_ltcs_field_id]:
-                    ret.append(story)
-            return len(ret)
+            return len([story for story in stories if
+                        len(story['fields']['issuelinks']) >= story['fields'][expected_ltcs_field_id]])
         except KeyError as reason:
             logging.error('Error processing jira response. The key %s not found!', reason)
             return -1
