@@ -37,7 +37,7 @@ class JiraBacklogWithLtcs(unittest.TestCase):
         self.assertEqual(1, result)
         mock_get_field_id.assert_called_once_with('custom_field_name')
 
-    def test_nr_user_stories_with_sufficient_ltcs_multiple_jqls(self, mock_get_query, mock_get_field_id):
+    def test_nr_user_stories_with_sufficient_ltcs_multi(self, mock_get_query, mock_get_field_id):
         """ Tests that the function invokes correct default jql query. """
         mock_get_query.side_effect = [{"issues": [{"fields": {"custom_123": 1, "issuelinks": [{"id": "1"}]}}]},
                                       {"issues": [{"fields": {"custom_123": 1, "issuelinks": [{"id": "2"}]}}]}]
@@ -51,7 +51,7 @@ class JiraBacklogWithLtcs(unittest.TestCase):
         mock_get_field_id.assert_called_once_with('custom_field_name')
         self.assertEqual([call('1st project!'), call('2nd project!')], mock_get_query.call_args_list)
 
-    def test_nr_user_stories_with_sufficient_ltcs_error_custom_field(self, mock_get_query, mock_get_field_id):
+    def test_nr_user_stories_with_sufficient_ltcs_error(self, mock_get_query, mock_get_field_id):
         """ Tests that the function invokes correct default jql query. """
         mock_get_field_id.return_value = None
         backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'custom_field_name')
@@ -63,7 +63,7 @@ class JiraBacklogWithLtcs(unittest.TestCase):
         mock_get_query.assert_not_called()
 
     @patch.object(logging, 'error')
-    def test_nr_user_stories_with_sufficient_ltcs_missing_field(self, mock_error, mock_get_query, mock_get_field_id):
+    def test_nr_user_stories_with_sufficient_ltcs_field(self, mock_error, mock_get_query, mock_get_field_id):
         """ Tests that the function invokes correct default jql query. """
         mock_get_query.return_value = {"issues": [{"fields": {"issuelinks": [{"id": "1"}]}}]}
         mock_get_field_id.return_value = 'missing_custom_field'
@@ -85,7 +85,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_init(self, mock_init, mock_nr_issues):
         """ Tests that the inner JiraFilter is initialized with correct parameters """
         mock_init.return_value = None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!')
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant')
         backlog.nr_user_stories()
         mock_nr_issues.assert_called_once()
         mock_init.assert_called_once_with('url!', 'username!', 'password!')
@@ -94,7 +94,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_nr_user_stories(self, mock_nr_issues):
         """ Tests that the function invokes correct default jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!')
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant')
         result = backlog.nr_user_stories()
         self.assertEqual(1, result)
         mock_nr_issues.assert_called_once_with('project = "project!" AND type = Story')
@@ -102,7 +102,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_nr_user_stories_custom(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!',
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant',
                               jql_config={"nr_user_stories": ['1st {project}', '2nd {project}']})
         result = backlog.nr_user_stories()
         self.assertEqual(1, result)
@@ -111,7 +111,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_nr_user_stories_custom_filter_number(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jira filter number instead of the query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?',
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', 'unimportant',
                               jql_config={"nr_user_stories": [11, '12']})
         result = backlog.nr_user_stories()
         self.assertEqual(1, result)
@@ -120,7 +120,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_approved_user_stories(self, mock_nr_issues):
         """ Tests that the function invokes correct default jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!')
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant')
         result = backlog.approved_user_stories()
         self.assertEqual(1, result)
         mock_nr_issues.assert_called_once()
@@ -128,7 +128,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_approved_user_stories_custom(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!',
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant',
                               jql_config={"approved_user_stories": ['1st {project}', '2nd {project}']})
         result = backlog.approved_user_stories()
         self.assertEqual(1, result)
@@ -137,7 +137,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_approved_user_stories_custom_filter_number(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jira filter number instead of the query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?',
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', 'unimportant',
                               jql_config={"approved_user_stories": [11, '12']})
         result = backlog.approved_user_stories()
         self.assertEqual(1, result)
@@ -146,7 +146,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_reviewed_user_stories(self, mock_nr_issues):
         """ Tests that the function invokes correct default jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!')
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant')
         result = backlog.reviewed_user_stories()
         self.assertEqual(1, result)
         mock_nr_issues.assert_called_once()
@@ -154,7 +154,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_reviewed_user_stories_custom(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!',
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant',
                               jql_config={"reviewed_user_stories": ['1st {project}', '2nd {project}']})
         result = backlog.reviewed_user_stories()
         self.assertEqual(1, result)
@@ -163,7 +163,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_reviewed_user_stories_custom_filter_number(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jira filter number instead of the query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?',
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', 'unimportant',
                               jql_config={"reviewed_user_stories": [11, '12']})
         result = backlog.reviewed_user_stories()
         self.assertEqual(1, result)
@@ -172,7 +172,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_reviewed_ltcs(self, mock_nr_issues):
         """ Tests that the function invokes correct default jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!')
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant')
         result = backlog.reviewed_ltcs()
         self.assertEqual(1, result)
         mock_nr_issues.assert_called_once()
@@ -180,7 +180,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_reviewed_ltcs_custom(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!',
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant',
                               jql_config={"reviewed_ltcs": ['1st {project}', '2nd {project}']})
         result = backlog.reviewed_ltcs()
         self.assertEqual(1, result)
@@ -189,7 +189,8 @@ class JiraBacklogTests(unittest.TestCase):
     def test_reviewed_ltcs_custom_filter_number(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jira filter number instead of the query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', jql_config={"reviewed_ltcs": [11, '12']})
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', 'unimportant',
+                              jql_config={"reviewed_ltcs": [11, '12']})
         result = backlog.reviewed_ltcs()
         self.assertEqual(1, result)
         mock_nr_issues.assert_called_once_with('11', '12')
@@ -197,7 +198,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_nr_ltcs(self, mock_nr_issues):
         """ Tests that the function invokes correct default jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!')
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant')
         result = backlog.nr_ltcs()
         self.assertEqual(1, result)
         mock_nr_issues.assert_called_once()
@@ -205,7 +206,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_nr_ltcs_custom(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!',
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant',
                               jql_config={"nr_ltcs": ['1st {project}', '2nd {project}']})
         result = backlog.nr_ltcs()
         self.assertEqual(1, result)
@@ -214,7 +215,8 @@ class JiraBacklogTests(unittest.TestCase):
     def test_nr_ltcs_custom_filter_number(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jira filter number instead of the query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', jql_config={"nr_ltcs": [11, '12']})
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', 'unimportant',
+                              jql_config={"nr_ltcs": [11, '12']})
         result = backlog.nr_ltcs()
         self.assertEqual(1, result)
         mock_nr_issues.assert_called_once_with('11', '12')
@@ -222,7 +224,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_approved_ltcs(self, mock_nr_issues):
         """ Tests that the function invokes correct default jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!')
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant')
         result = backlog.approved_ltcs()
         self.assertEqual(1, result)
         mock_nr_issues.assert_called_once()
@@ -230,7 +232,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_approved_ltcs_custom(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!',
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant',
                               jql_config={"approved_ltcs": ['1st {project}', '2nd {project}']})
         result = backlog.approved_ltcs()
         self.assertEqual(1, result)
@@ -239,7 +241,8 @@ class JiraBacklogTests(unittest.TestCase):
     def test_approved_ltcs_custom_filter_number(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jira filter number instead of the query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', jql_config={"approved_ltcs": [11, '12']})
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', 'unimportant',
+                              jql_config={"approved_ltcs": [11, '12']})
         result = backlog.approved_ltcs()
         self.assertEqual(1, result)
         mock_nr_issues.assert_called_once_with('11', '12')
@@ -247,7 +250,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_nr_automated_ltcs(self, mock_nr_issues):
         """ Tests that the function invokes correct default jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!')
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant')
         result = backlog.nr_automated_ltcs()
         self.assertEqual(1, result)
         mock_nr_issues.assert_called_once()
@@ -255,7 +258,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_nr_automated_ltcs_custom(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!',
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant',
                               jql_config={"nr_automated_ltcs": ['1st {project}', '2nd {project}']})
         result = backlog.nr_automated_ltcs()
         self.assertEqual(1, result)
@@ -264,7 +267,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_nr_automated_ltcs_custom_filter_number(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jira filter number instead of the query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?',
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', 'unimportant',
                               jql_config={"nr_automated_ltcs": [11, '12']})
         result = backlog.nr_automated_ltcs()
         self.assertEqual(1, result)
@@ -273,7 +276,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_nr_ltcs_to_be_automated(self, mock_nr_issues):
         """ Tests that the function invokes correct default jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!')
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant')
         result = backlog.nr_ltcs_to_be_automated()
         self.assertEqual(1, result)
         mock_nr_issues.assert_called_once()
@@ -281,7 +284,7 @@ class JiraBacklogTests(unittest.TestCase):
     def test_nr_ltcs_to_be_automated_custom(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jql query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!',
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant',
                               jql_config={"nr_ltcs_to_be_automated": ['1st {project}', '2nd {project}']})
         result = backlog.nr_ltcs_to_be_automated()
         self.assertEqual(1, result)
@@ -290,57 +293,41 @@ class JiraBacklogTests(unittest.TestCase):
     def test_nr_ltcs_to_be_automated_custom_filter_number(self, mock_nr_issues):
         """ Tests that the function invokes correct custom jira filter number instead of the query. """
         mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?',
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', 'unimportant',
                               jql_config={"nr_ltcs_to_be_automated": [11, '12']})
         result = backlog.nr_ltcs_to_be_automated()
         self.assertEqual(1, result)
         mock_nr_issues.assert_called_once_with('11', '12')
 
-    def test_nr_manual_ltcs_too_old(self, mock_nr_issues):
+
+class JiraBacklogPlaceholdersTests(unittest.TestCase):
+    """ Unit tests for dummy functions """
+    def test_nr_manual_ltcs(self):
+        """ Tests that the function invokes correct custom jira filter number instead of the query. """
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', 'unimportant')
+        self.assertEqual(-1, backlog.nr_manual_ltcs())
+
+    def test_date_of_last_manual_test(self):
+        """ Tests that the function invokes correct custom jira filter number instead of the query. """
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', 'unimportant')
+        self.assertEqual(datetime.datetime.min, backlog.date_of_last_manual_test())
+
+    def test_manual_test_execution_url(self):
+        """ Tests that the function invokes correct custom jira filter number instead of the query. """
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', 'unimportant')
+        self.assertEqual('', backlog.manual_test_execution_url())
+
+    def test_nr_manual_ltcs_too_old(self):
         """ Tests that the function invokes correct default jql query. """
-        mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!')
-        result = backlog.nr_manual_ltcs_too_old('1', 1)
-        self.assertEqual(1, result)
-        mock_nr_issues.assert_called_once()
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant')
+        self.assertEqual(-1, backlog.nr_manual_ltcs_too_old('1', 1))
 
-    def test_nr_manual_ltcs_too_old_custom(self, mock_nr_issues):
+    def test_nr_manual_ltcs_too_old_custom(self):
         """ Tests that the function invokes correct custom jql query. """
-        mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!',
-                              jql_config={"nr_manual_ltcs_too_old": ['1st {project}', '2nd {project}']})
-        result = backlog.nr_manual_ltcs_too_old('1', 1)
-        self.assertEqual(1, result)
-        mock_nr_issues.assert_called_once_with('1st project!', '2nd project!')
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'project!', 'unimportant')
+        self.assertEqual(-1, backlog.nr_manual_ltcs_too_old('1', 1))
 
-    def test_nr_manual_ltcs_too_old_custom_filter_number(self, mock_nr_issues):
+    def test_nr_manual_ltcs_too_old_custom_filter_number(self):
         """ Tests that the function invokes correct custom jira filter number instead of the query. """
-        mock_nr_issues.return_value = 1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?',
-                              jql_config={"nr_manual_ltcs_too_old": [11, '12']})
-        result = backlog.nr_manual_ltcs_too_old('1', 1)
-        self.assertEqual(1, result)
-        mock_nr_issues.assert_called_once_with('11', '12')
-
-    # placeholder tests
-
-    def test_nr_manual_ltcs(self, mock_nr_issues):
-        """ Tests that the function invokes correct custom jira filter number instead of the query. """
-        mock_nr_issues.return_value = -1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?')
-        result = backlog.nr_manual_ltcs()
-        self.assertEqual(-1, result)
-
-    def test_date_of_last_manual_test(self, mock_nr_issues):
-        """ Tests that the function invokes correct custom jira filter number instead of the query. """
-        mock_nr_issues.return_value = -1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?')
-        result = backlog.date_of_last_manual_test()
-        self.assertEqual(datetime.datetime.min, result)
-
-    def test_manual_test_execution_url(self, mock_nr_issues):
-        """ Tests that the function invokes correct custom jira filter number instead of the query. """
-        mock_nr_issues.return_value = -1, None
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?')
-        result = backlog.manual_test_execution_url()
-        self.assertEqual('dull!', result)
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', 'unimportant')
+        self.assertEqual(-1, backlog.nr_manual_ltcs_too_old('1', 1))

@@ -18,7 +18,7 @@ import logging
 import unittest
 from unittest.mock import patch
 import urllib.error
-from hqlib.metric_source import Jira, url_opener
+from hqlib.metric_source import url_opener, Jira
 
 
 @patch.object(url_opener.UrlOpener, '__init__')

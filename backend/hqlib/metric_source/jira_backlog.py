@@ -44,10 +44,7 @@ JQL_CONFIG = {
                          '"Test execution" = "Automated" AND status != open',
     "nr_ltcs_to_be_automated": 'project = "{project}" AND type = "Logical Test Case" AND '
                                '"Test execution" = "Automated" AND status = open',
-    "nr_manual_ltcs": 'project = "{project}" AND type = "Logical Test Case" AND "Test execution" = Manual',
-    "date_of_last_manual_test": '',
-    "manual_test_execution_url": '',
-    "nr_manual_ltcs_too_old": ''
+    "nr_manual_ltcs": 'project = "{project}" AND type = "Logical Test Case" AND "Test execution" = Manual'
 }
 
 
@@ -57,14 +54,14 @@ class JiraBacklog(Backlog):
     metric_source_name = 'Jira backlog'
 
     # pylint: disable=too-many-arguments
-    def __init__(self, url: str, username: str, password: str, project: str, expected_ltcs_field: str=None,
-                 jql_config=JQL_CONFIG) -> None:
+    def __init__(self, url: str, username: str, password: str, project: str, expected_ltcs_field: str,
+                 jql_config=None) -> None:
         self._url = url
         self._username = username
         self._expected_ltcs_field = expected_ltcs_field
         self._password = password
         self._project = project
-        self._jql_config = jql_config
+        self._jql_config = JQL_CONFIG if jql_config is None else jql_config
         super().__init__(url=url)
 
     def _number_of_issues_in_jql(self, *jql: str):
@@ -98,16 +95,19 @@ class JiraBacklog(Backlog):
             return -1
 
         try:
-            stories = []
-            jql_list = self.__format_jql_list(self._jql_config['nr_user_stories_with_sufficient_ltcs'])
-            for jql in jql_list:
-                stories += jira.get_query(jql)['issues']
-
+            stories = self.__get_stories_with_ltcs(jira)
             return len([story for story in stories if
                         len(story['fields']['issuelinks']) >= story['fields'][expected_ltcs_field_id]])
         except KeyError as reason:
             logging.error('Error processing jira response. The key %s not found!', reason)
             return -1
+
+    def __get_stories_with_ltcs(self, jira):
+        stories = []
+        jql_list = self.__format_jql_list(self._jql_config['nr_user_stories_with_sufficient_ltcs'])
+        for jql in jql_list:
+            stories += jira.get_query(jql)['issues']
+        return stories
 
     def reviewed_ltcs(self) -> int:
         """ Return the number of reviewed logical test cases for the product. """
@@ -139,8 +139,8 @@ class JiraBacklog(Backlog):
 
     def manual_test_execution_url(self, version: str = 'trunk') -> str:
         """ Return the url for the manual test execution report. """
-        return 'dull!'
+        return ''
 
     def nr_manual_ltcs_too_old(self, version: str, target: int) -> int:
         """ Return the number of manual logical test cases that have not been executed for target amount of days. """
-        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['nr_manual_ltcs_too_old']))[0]
+        return -1
