@@ -15,10 +15,10 @@ limitations under the License.
 """
 
 
+import logging
 import datetime
 from typing import List
 
-from hqlib import utils
 from hqlib.typing import DateTime
 from .abstract.backlog import Backlog
 
@@ -28,17 +28,9 @@ JQL_CONFIG = {
                              '"Ready status" = "<font color = \"#888720\"><b>Approved</b></font>"',
     "reviewed_user_stories": 'project = "{project}" AND type = Story AND "Ready status" is not EMPTY',
 
-    "number_of_storiers_with_expected_ltcs": 'project = "{}" AND type = Story AND issueFunction in '
-                                             'hasLinks("is tested by") AND  issueFunction in '
-                                             'aggregateExpression("number_ltcs", "customfield_10210.countBy{{it}}")',
-
-    "number_of_stories_with_specified_number_of_ltcs": 'project = "{}" AND type = Story AND '
-                                                       'issueFunction in hasLinks("is tested by") AND '
-                                                       '"Expected number of LTC\'s" = {}',
-
-    "number_of_ltcs_for_user_story": 'project = "{}" AND type = "Logical Test Case" AND issueFunction in '
-                                     'linkedIssuesOf("type = Story AND id = {}", "is tested by") AND '
-                                     'issueFunction in aggregateExpression("count", "creator.count({{it}})")',
+    "nr_user_stories_with_sufficient_ltcs":
+        'project = "{project}" AND type = Story AND issueFunction in hasLinks("is tested by") '
+        'AND "Expected number of LTC\'s" > 0',
 
     "ltcs_for_user_story": 'project = "{project}" AND type = "Logical Test Case" '
                            'AND issue in linkedIssues({story-id}, "is tested by")',
@@ -65,12 +57,14 @@ class JiraBacklog(Backlog):
     metric_source_name = 'Jira backlog'
 
     # pylint: disable=too-many-arguments
-    def __init__(self, url: str, username: str, password: str, project: str, jql_config=None) -> None:
+    def __init__(self, url: str, username: str, password: str, project: str, expected_ltcs_field: str=None,
+                 jql_config=JQL_CONFIG) -> None:
         self._url = url
         self._username = username
+        self._expected_ltcs_field = expected_ltcs_field
         self._password = password
         self._project = project
-        self._jql_config = JQL_CONFIG if jql_config is None else jql_config
+        self._jql_config = jql_config
         super().__init__(url=url)
 
     def _number_of_issues_in_jql(self, *jql: str):
@@ -82,8 +76,8 @@ class JiraBacklog(Backlog):
         return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['nr_user_stories']))[0]
 
     def __format_jql_list(self, jql, param2: str = None) -> List[str]:
-        return [str(jql).format(self._project, param2)] \
-            if not isinstance(jql, list) else [str(j).format(self._project, param2) for j in jql]
+        return [str(jql).format(param2, project=self._project)] \
+            if not isinstance(jql, list) else [str(j).format(param2, project=self._project) for j in jql]
 
     def approved_user_stories(self) -> int:
         """ Return the number of user stories that have been approved. """
@@ -97,22 +91,26 @@ class JiraBacklog(Backlog):
         """ Return the number of user stories that have enough logical test cases. """
 
         from ..metric_source import Jira
-        jira =  Jira(self._url, self._username, self._password)
+        jira = Jira(self._url, self._username, self._password)
 
-        x = jira.get_agregate_jql_result(*self.__format_jql_list(self._jql_config['number_of_storiers_with_expected_ltcs']))['number_ltcs']
-        xxx = x[1:-1].split(',')
+        expected_ltcs_field_id = jira.get_field_id(self._expected_ltcs_field)
+        if expected_ltcs_field_id is None:
+            return -1
 
-        ret = []
-        for a in xxx:
-            ltcs = a.split(':')
-            if ltcs[0]:
-                bbb = jira.get_query(*self.__format_jql_list(*self.__format_jql_list(self._jql_config['number_of_stories_with_specified_number_of_ltcs'], ltcs[0])))
-                for w  in bbb['issues']:
-                    fff = jira.get_agregate_jql_result(
-                        *self.__format_jql_list(self._jql_config['number_of_ltcs_for_user_story'], w['key']))
-                    if fff['count'] >= ltcs[1]:
-                        ret.append(w)
-        return len(ret)
+        try:
+            stories = []
+            jql_list = self.__format_jql_list(self._jql_config['nr_user_stories_with_sufficient_ltcs'])
+            for jql in jql_list:
+                stories += jira.get_query(jql)['issues']
+
+            ret = []
+            for story in stories:
+                if len(story['fields']['issuelinks']) >= story['fields'][expected_ltcs_field_id]:
+                    ret.append(story)
+            return len(ret)
+        except KeyError as reason:
+            logging.error('Error processing jira response. The key %s not found!', reason)
+            return -1
 
     def reviewed_ltcs(self) -> int:
         """ Return the number of reviewed logical test cases for the product. """

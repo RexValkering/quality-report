@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import functools
 import logging
 import urllib.parse
 from json import JSONDecodeError
@@ -49,6 +50,7 @@ class Jira(object):
         except url_opener.UrlOpener.url_open_exceptions:
             return None
 
+    @functools.lru_cache(maxsize=1024)
     def get_field_id(self, filed_name: str) -> Optional[str]:
         """ Retrieves the id of a field for a given name """
         try:
