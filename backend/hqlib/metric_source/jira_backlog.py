@@ -17,7 +17,7 @@ limitations under the License.
 
 import logging
 import datetime
-from typing import List
+from typing import List, Tuple, Set
 
 from hqlib.typing import DateTime
 from .abstract.backlog import Backlog
@@ -64,27 +64,27 @@ class JiraBacklog(Backlog):
         self._jql_config = JQL_CONFIG if jql_config is None else jql_config
         super().__init__(url=url)
 
-    def _number_of_issues_in_jql(self, *jql: str):
+    def _number_of_issues_in_jql(self, *jql: str) -> Tuple[int, List[str]]:
         from ..metric_source import JiraFilter
         return JiraFilter(self._url, self._username, self._password).nr_issues(*jql)
 
-    def nr_user_stories(self) -> int:
+    def nr_user_stories(self) -> Tuple[int, List[str]]:
         """ Return the total number of user stories. """
-        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['nr_user_stories']))[0]
+        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['nr_user_stories']))
 
     def __format_jql_list(self, jql, param2: str = None) -> List[str]:
         return [str(jql).format(param2, project=self._project)] \
             if not isinstance(jql, list) else [str(j).format(param2, project=self._project) for j in jql]
 
-    def approved_user_stories(self) -> int:
+    def approved_user_stories(self) -> Tuple[int, List[str]]:
         """ Return the number of user stories that have been approved. """
-        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['approved_user_stories']))[0]
+        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['approved_user_stories']))
 
-    def reviewed_user_stories(self) -> int:
+    def reviewed_user_stories(self) -> Tuple[int, List[str]]:
         """ Return the number of user stories that have been reviewed. """
-        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['reviewed_user_stories']))[0]
+        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['reviewed_user_stories']))
 
-    def nr_user_stories_with_sufficient_ltcs(self) -> int:
+    def nr_user_stories_with_sufficient_ltcs(self) -> Tuple[int, List[str]]:
         """ Return the number of user stories that have enough logical test cases. """
 
         from ..metric_source import Jira
@@ -92,15 +92,16 @@ class JiraBacklog(Backlog):
 
         expected_ltcs_field_id = jira.get_field_id(self._expected_ltcs_field)
         if expected_ltcs_field_id is None:
-            return -1
+            return (-1, [])
 
         try:
             stories = self.__get_stories_with_ltcs(jira)
-            return len([story for story in stories if
-                        len(story['fields']['issuelinks']) >= story['fields'][expected_ltcs_field_id]])
+            ok_stories = [story for story in stories
+                          if len(story['fields']['issuelinks']) >= story['fields'][expected_ltcs_field_id]]
+            return len(ok_stories), ok_stories
         except KeyError as reason:
             logging.error('Error processing jira response. The key %s not found!', reason)
-            return -1
+            return (-1, [])
 
     def __get_stories_with_ltcs(self, jira):
         stories = []
@@ -109,29 +110,29 @@ class JiraBacklog(Backlog):
             stories += jira.get_query(jql)['issues']
         return stories
 
-    def reviewed_ltcs(self) -> int:
+    def reviewed_ltcs(self) -> Tuple[int, List[str]]:
         """ Return the number of reviewed logical test cases for the product. """
-        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['reviewed_ltcs']))[0]
+        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['reviewed_ltcs']))
 
-    def nr_ltcs(self) -> int:
+    def nr_ltcs(self) -> Tuple[int, List[str]]:
         """ Return the number of logical test cases. """
-        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['nr_ltcs']))[0]
+        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['nr_ltcs']))
 
-    def approved_ltcs(self) -> int:
+    def approved_ltcs(self) -> Tuple[int, List[str]]:
         """ Return the number of approved logical test casess. """
-        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['approved_ltcs']))[0]
+        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['approved_ltcs']))
 
-    def nr_automated_ltcs(self) -> int:
+    def nr_automated_ltcs(self) -> Tuple[int, List[str]]:
         """ Return the number of logical test cases that have been implemented as automated tests. """
-        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['nr_automated_ltcs']))[0]
+        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['nr_automated_ltcs']))
 
-    def nr_ltcs_to_be_automated(self) -> int:
+    def nr_ltcs_to_be_automated(self) -> Tuple[int, List[str]]:
         """ Return the number of logical test cases for the product that have to be automated. """
-        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['nr_ltcs_to_be_automated']))[0]
+        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['nr_ltcs_to_be_automated']))
 
-    def nr_manual_ltcs(self, version: str = 'trunk') -> int:
+    def nr_manual_ltcs(self, version: str = 'trunk') -> Tuple[int, List[str]]:
         """ Return the number of logical test cases for the product that are executed manually. """
-        return -1
+        return self._number_of_issues_in_jql(*self.__format_jql_list(self._jql_config['nr_manual_ltcs']))
 
     def date_of_last_manual_test(self, version: str = 'trunk') -> DateTime:
         """ Return the date when the product/version was last tested manually. """

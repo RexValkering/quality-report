@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 
+from typing import List, Tuple
 from hqlib.typing import DateTime
 from ... import domain
 
@@ -22,43 +23,43 @@ from ... import domain
 class Backlog(domain.MetricSource):
     """ Abstract base class for user story metrics. """
 
-    def nr_user_stories(self) -> int:
+    def nr_user_stories(self) -> Tuple[int, List[str]]:
         """ Return the total number of user stories. """
         raise NotImplementedError
 
-    def approved_user_stories(self) -> int:
+    def approved_user_stories(self) -> Tuple[int, List[str]]:
         """ Return the number of user stories that have been approved. """
         raise NotImplementedError
 
-    def reviewed_user_stories(self) -> int:
+    def reviewed_user_stories(self) -> Tuple[int, List[str]]:
         """ Return the number of user stories that have been reviewed. """
         raise NotImplementedError
 
-    def nr_user_stories_with_sufficient_ltcs(self) -> int:
+    def nr_user_stories_with_sufficient_ltcs(self) -> Tuple[int, List[str]]:
         """ Return the number of user stories that have enough logical test cases. """
         raise NotImplementedError
 
-    def reviewed_ltcs(self) -> int:
+    def reviewed_ltcs(self) -> Tuple[int, List[str]]:
         """ Return the number of reviewed logical test cases for the product. """
         raise NotImplementedError
 
-    def nr_ltcs(self) -> int:
+    def nr_ltcs(self) -> Tuple[int, List[str]]:
         """ Return the number of logical test cases. """
         raise NotImplementedError
 
-    def approved_ltcs(self) -> int:
+    def approved_ltcs(self) -> Tuple[int, List[str]]:
         """ Return the number of approved logical test casess. """
         raise NotImplementedError
 
-    def nr_automated_ltcs(self) -> int:
+    def nr_automated_ltcs(self) -> Tuple[int, List[str]]:
         """ Return the number of logical test cases that have been implemented as automated tests. """
         raise NotImplementedError
 
-    def nr_ltcs_to_be_automated(self) -> int:
+    def nr_ltcs_to_be_automated(self) -> Tuple[int, List[str]]:
         """ Return the number of logical test cases for the product that have to be automated. """
         raise NotImplementedError
 
-    def nr_manual_ltcs(self, version: str = 'trunk') -> int:
+    def nr_manual_ltcs(self, version: str = 'trunk') -> Tuple[int, List[str]]:
         """ Return the number of logical test cases for the product that are executed manually. """
         raise NotImplementedError
 
