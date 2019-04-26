@@ -24,8 +24,8 @@ from ...metric_source.abstract.backlog import Backlog
 class UserStoryMetric(LowerIsBetterMetric):
     """ Base class for metrics measuring the quality of user stories. """
     unit = 'user stories'
-
     metric_source_class = Backlog
+    extra_info_headers = {"issue": "Issue"}
 
     def value(self):
         nr_ok_stories, ok_stories = self._nr_user_stories_ok()

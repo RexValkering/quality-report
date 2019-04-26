@@ -27,8 +27,8 @@ from ...metric_source.abstract.backlog import Backlog
 class LogicalTestCaseMetric(LowerIsBetterMetric):
     """ Base class for metrics measuring the quality of logical test cases. """
     unit = 'logische testgevallen'
-
     metric_source_class = Backlog
+    extra_info_headers = {"issue": "Issue"}
 
     @functools.lru_cache(maxsize=1024)
     def value(self):
@@ -112,6 +112,7 @@ class ManualLogicalTestCases(LowerIsBetterMetric):
     target_value = 21
     low_target_value = 28
     metric_source_class = metric_source.Backlog
+    extra_info_headers = {"issue": "Issue"}
 
     @functools.lru_cache(maxsize=1024)
     def value(self):
