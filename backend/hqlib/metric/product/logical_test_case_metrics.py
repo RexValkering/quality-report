@@ -139,7 +139,7 @@ class ManualLogicalTestCases(LowerIsBetterMetric):
         if self._metric_source:
             if self._metric_source.nr_manual_ltcs()[0] == 0:
                 return self.no_manual_tests_template
-            elif self._metric_source.date_of_last_manual_test() == datetime.datetime.min:
+            if self._metric_source.date_of_last_manual_test() == datetime.datetime.min:
                 return self.never_template
         return super()._get_template()
 

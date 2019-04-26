@@ -17,7 +17,7 @@ limitations under the License.
 
 import logging
 import datetime
-from typing import List, Tuple, Set
+from typing import List, Tuple
 
 from hqlib.typing import DateTime
 from .abstract.backlog import Backlog
