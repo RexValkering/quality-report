@@ -19,7 +19,7 @@ import datetime
 import unittest
 from unittest.mock import patch, call
 from hqlib.metric_source import JiraFilter, Jira
-from hqlib.metric_source.jira_backlog import JiraBacklog
+from hqlib.metric_source.jira_backlog import JiraBacklog, JQL_CONFIG
 
 
 @patch.object(Jira, 'get_field_id')
@@ -302,13 +302,17 @@ class JiraBacklogTests(unittest.TestCase):
         self.assertEqual((1, ['a']), result)
         mock_nr_issues.assert_called_once_with('11', '12')
 
+    def test_nr_manual_ltcs(self, mock_nr_issues):
+        """ Tests that the function invokes correct custom jira filter number instead of the query. """
+        backlog = JiraBacklog('url!', 'username!', 'password!', 'Project Name', 'unimportant')
+        mock_nr_issues.return_value = 1, ['a']
+        result = backlog.nr_manual_ltcs()
+        self.assertEqual((1, ['a']), result)
+        mock_nr_issues.assert_called_once_with(JQL_CONFIG["nr_manual_ltcs"].format(project='Project Name'))
+
 
 class JiraBacklogPlaceholdersTests(unittest.TestCase):
     """ Unit tests for dummy functions """
-    def test_nr_manual_ltcs(self):
-        """ Tests that the function invokes correct custom jira filter number instead of the query. """
-        backlog = JiraBacklog('url!', 'username!', 'password!', 'whatever!?', 'unimportant')
-        self.assertEqual(-1, backlog.nr_manual_ltcs())
 
     def test_date_of_last_manual_test(self):
         """ Tests that the function invokes correct custom jira filter number instead of the query. """

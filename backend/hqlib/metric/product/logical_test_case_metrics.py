@@ -59,10 +59,10 @@ class LogicalTestCasesNotReviewed(LogicalTestCaseMetric):
     low_target_value = 15
 
     def _nr_ltcs_ok(self) -> int:
-        return self._metric_source.reviewed_ltcs() if self._metric_source else -1
+        return self._metric_source.reviewed_ltcs()[0] if self._metric_source else -1
 
     def _nr_ltcs(self) -> int:
-        return self._metric_source.nr_ltcs() if self._metric_source else -1
+        return self._metric_source.nr_ltcs()[0] if self._metric_source else -1
 
 
 class LogicalTestCasesNotApproved(LogicalTestCaseMetric):
@@ -75,10 +75,10 @@ class LogicalTestCasesNotApproved(LogicalTestCaseMetric):
     low_target_value = 10
 
     def _nr_ltcs_ok(self) -> int:
-        return self._metric_source.approved_ltcs() if self._metric_source else -1
+        return self._metric_source.approved_ltcs()[0] if self._metric_source else -1
 
     def _nr_ltcs(self) -> int:
-        return self._metric_source.reviewed_ltcs() if self._metric_source else -1
+        return self._metric_source.reviewed_ltcs()[0] if self._metric_source else -1
 
 
 class LogicalTestCasesNotAutomated(LogicalTestCaseMetric):
@@ -92,10 +92,10 @@ class LogicalTestCasesNotAutomated(LogicalTestCaseMetric):
     low_target_value = 15
 
     def _nr_ltcs_ok(self) -> int:
-        return self._metric_source.nr_automated_ltcs() if self._metric_source else -1
+        return self._metric_source.nr_automated_ltcs()[0] if self._metric_source else -1
 
     def _nr_ltcs(self) -> int:
-        return self._metric_source.nr_ltcs_to_be_automated() if self._metric_source else -1
+        return self._metric_source.nr_ltcs_to_be_automated()[0] if self._metric_source else -1
 
 
 class ManualLogicalTestCases(LowerIsBetterMetric):
@@ -117,7 +117,7 @@ class ManualLogicalTestCases(LowerIsBetterMetric):
     def value(self):
         if self._missing():
             return -1
-        if self._metric_source.nr_manual_ltcs() == 0:
+        if self._metric_source.nr_manual_ltcs()[0] == 0:
             return 0
         return (datetime.datetime.now() - self._metric_source.date_of_last_manual_test()).days
 
@@ -128,7 +128,7 @@ class ManualLogicalTestCases(LowerIsBetterMetric):
         parameters = super()._parameters()
         parameters['date'] = utils.format_date(self._metric_source.date_of_last_manual_test()) \
             if self._metric_source else '?'
-        parameters['nr_manual_ltcs'] = self._metric_source.nr_manual_ltcs() \
+        parameters['nr_manual_ltcs'] = self._metric_source.nr_manual_ltcs()[0] \
             if self._metric_source else '?'
         parameters['nr_manual_ltcs_too_old'] = self._metric_source.nr_manual_ltcs_too_old('trunk', self.target()) \
             if self._metric_source else '?'
@@ -136,7 +136,7 @@ class ManualLogicalTestCases(LowerIsBetterMetric):
 
     def _get_template(self) -> str:
         if self._metric_source:
-            if self._metric_source.nr_manual_ltcs() == 0:
+            if self._metric_source.nr_manual_ltcs()[0] == 0:
                 return self.no_manual_tests_template
             elif self._metric_source.date_of_last_manual_test() == datetime.datetime.min:
                 return self.never_template
@@ -157,11 +157,11 @@ class NumberOfManualLogicalTestCases(LogicalTestCaseMetric):
 
     def _nr_ltcs_ok(self) -> int:
         nr_ltcs = self._nr_ltcs()
-        nr_manual_ltcs = self._metric_source.nr_manual_ltcs() if self._metric_source else -1
+        nr_manual_ltcs = self._metric_source.nr_manual_ltcs()[0] if self._metric_source else -1
         return -1 if -1 in (nr_ltcs, nr_manual_ltcs) else nr_ltcs - nr_manual_ltcs
 
     def _nr_ltcs(self) -> int:
-        return self._metric_source.nr_ltcs() if self._metric_source else -1
+        return self._metric_source.nr_ltcs()[0] if self._metric_source else -1
 
     def _metric_source_urls(self):
         return [self._metric_source.manual_test_execution_url()] if self._metric_source else []

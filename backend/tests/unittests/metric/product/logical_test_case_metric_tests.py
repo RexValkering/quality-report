@@ -36,8 +36,8 @@ class LogicalTestCasesNotAutomatedTest(unittest.TestCase):
     def test_value(self):
         """ Test that the value of the metric is the percentage of user stories that has enough logical test cases
             as reported by Birt. """
-        self.__birt.nr_ltcs_to_be_automated.return_value = 25
-        self.__birt.nr_automated_ltcs.return_value = 20
+        self.__birt.nr_ltcs_to_be_automated.return_value = 25, []
+        self.__birt.nr_automated_ltcs.return_value = 20, []
         self.assertEqual(5, self.__metric.value())
 
     def test_value_on_error(self):
@@ -47,8 +47,8 @@ class LogicalTestCasesNotAutomatedTest(unittest.TestCase):
 
     def test_report(self):
         """ Test that the report is correct. """
-        self.__birt.nr_ltcs_to_be_automated.return_value = 25
-        self.__birt.nr_automated_ltcs.return_value = 20
+        self.__birt.nr_ltcs_to_be_automated.return_value = 25, []
+        self.__birt.nr_automated_ltcs.return_value = 20, []
         self.assertEqual('Er zijn 5 nog te automatiseren logische testgevallen, van in totaal 25 '
                          'geautomatiseerde logische testgevallen.', self.__metric.report())
 
@@ -70,14 +70,14 @@ class LogicalTestCasesNotReviewedTest(unittest.TestCase):
 
     def test_value(self):
         """ Test that the value of the metric is the number of not reviewed logical test cases as reported by Birt. """
-        self.__birt.nr_ltcs.return_value = 120
-        self.__birt.reviewed_ltcs.return_value = 110
+        self.__birt.nr_ltcs.return_value = 120, []
+        self.__birt.reviewed_ltcs.return_value = 110, []
         self.assertEqual(10, self.__metric.value())
 
     def test_report(self):
         """ Test that the report is correct. """
-        self.__birt.nr_ltcs.return_value = 120
-        self.__birt.reviewed_ltcs.return_value = 110
+        self.__birt.nr_ltcs.return_value = 120, []
+        self.__birt.reviewed_ltcs.return_value = 110, []
         self.assertEqual('Er zijn 10 niet gereviewde logische testgevallen, van in totaal 120 '
                          'logische testgevallen.', self.__metric.report())
 
@@ -99,14 +99,14 @@ class LogicalTestCasesNotApprovedTest(unittest.TestCase):
 
     def test_value(self):
         """ Test that the value of the metric is the number of not approved logical test cases as reported by Birt. """
-        self.__birt.approved_ltcs.return_value = 100
-        self.__birt.reviewed_ltcs.return_value = 110
+        self.__birt.approved_ltcs.return_value = 100, []
+        self.__birt.reviewed_ltcs.return_value = 110, []
         self.assertEqual(10, self.__metric.value())
 
     def test_report(self):
         """ Test that the report is correct. """
-        self.__birt.approved_ltcs.return_value = 100
-        self.__birt.reviewed_ltcs.return_value = 110
+        self.__birt.approved_ltcs.return_value = 100, []
+        self.__birt.reviewed_ltcs.return_value = 110, []
         self.assertEqual('Er zijn 10 niet goedgekeurde logische testgevallen, van in totaal 110 gereviewde '
                          'logische testgevallen.', self.__metric.report())
 
@@ -128,8 +128,8 @@ class NumberOfManualLogicalTestCasesTest(unittest.TestCase):
 
     def test_value(self):
         """ Test that the value of the metric is the number of manual logical test cases. """
-        self.__birt.nr_manual_ltcs.return_value = 10
-        self.__birt.nr_ltcs.return_value = 120
+        self.__birt.nr_manual_ltcs.return_value = 10, []
+        self.__birt.nr_ltcs.return_value = 120, []
         self.assertEqual(10, self.__metric.value())
 
     @patch.object(logging, 'warning')
@@ -141,8 +141,8 @@ class NumberOfManualLogicalTestCasesTest(unittest.TestCase):
 
     def test_report(self):
         """ Test the metric report. """
-        self.__birt.nr_manual_ltcs.return_value = 10
-        self.__birt.nr_ltcs.return_value = 120
+        self.__birt.nr_manual_ltcs.return_value = 10, []
+        self.__birt.nr_ltcs.return_value = 120, []
         self.assertEqual('Er zijn 10 handmatige logische testgevallen, van in totaal 120 logische testgevallen.',
                          self.__metric.report())
 
@@ -165,13 +165,13 @@ class ManualLogicalTestCasesTest(unittest.TestCase):
     def test_value(self):
         """ Test that the value of the metric is the number of days ago that the manual logical test cases have been
             last executed as reported by Birt. """
-        self.__birt.nr_manual_ltcs.return_value = 10
+        self.__birt.nr_manual_ltcs.return_value = 10, []
         self.__birt.date_of_last_manual_test.return_value = datetime.datetime.now() - timedelta(days=5)
         self.assertEqual(5, self.__metric.value())
 
     def test_value_zero_ltcs(self):
         """ Test that the value of the metric is zero if there are no test cases. """
-        self.__birt.nr_manual_ltcs.return_value = 0
+        self.__birt.nr_manual_ltcs.return_value = 0, []
         self.assertEqual(0, self.__metric.value())
 
     def test_value_when_untested(self):
@@ -182,7 +182,7 @@ class ManualLogicalTestCasesTest(unittest.TestCase):
 
     def test_report(self):
         """ Test that the report is correct. """
-        self.__birt.nr_manual_ltcs.return_value = 10
+        self.__birt.nr_manual_ltcs.return_value = 10, []
         self.__birt.nr_manual_ltcs_too_old.return_value = 5
         self.__birt.date_of_last_manual_test.return_value = datetime.datetime.now() - timedelta(days=5)
         self.assertTrue('5 van de 10 handmatige logische testgevallen zijn te lang geleden '
@@ -191,7 +191,7 @@ class ManualLogicalTestCasesTest(unittest.TestCase):
     def test_report_with_untested(self):
         """ Test that the report mentions the number of test cases that have never been tested. """
         self.__birt.date_of_last_manual_test.return_value = datetime.datetime.now() - datetime.timedelta(days=60)
-        self.__birt.nr_manual_ltcs.return_value = 10
+        self.__birt.nr_manual_ltcs.return_value = 10, []
         self.__birt.nr_manual_ltcs_too_old.return_value = 5
         self.assertTrue(
             self.__metric.report().startswith('5 van de 10 handmatige logische testgevallen zijn '
@@ -200,21 +200,21 @@ class ManualLogicalTestCasesTest(unittest.TestCase):
     def test_report_when_untested(self):
         """ Test that the report uses the correct template when the manual tests have not been executed at all. """
         self.__birt.date_of_last_manual_test.return_value = datetime.datetime.min
-        self.__birt.nr_manual_ltcs.return_value = 10
+        self.__birt.nr_manual_ltcs.return_value = 10, []
         self.assertEqual('De 10 handmatige logische testgevallen zijn nog niet allemaal uitgevoerd.',
                          self.__metric.report())
 
     def test_report_without_manual_testcases(self):
         """ Test the report when there are no manual test cases. """
         self.__birt.date_of_last_manual_test.return_value = datetime.datetime.min
-        self.__birt.nr_manual_ltcs.return_value = 0
+        self.__birt.nr_manual_ltcs.return_value = 0, []
         self.assertEqual(self.__metric.no_manual_tests_template.format(name='FakeSubject', unit=self.__metric.unit),
                          self.__metric.report())
 
     def test_status_without_manual_testcases_green(self):
         """ Test that the status is green when there are no manual test cases. """
         self.__birt.date_of_last_manual_test.return_value = datetime.datetime.now()
-        self.__birt.nr_manual_tests = 0
+        self.__birt.nr_manual_tests = 0, []
         self.__subject.target.return_value = 5
         self.__subject.low_target.return_value = 15
         self.assertEqual('perfect', self.__metric.status())

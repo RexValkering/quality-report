@@ -80,41 +80,41 @@ class BirtTest(unittest.TestCase):
     def test_nr_user_stories_with_sufficient_ltcs(self, mock_url_open):
         """ Test that the number of user stories with sufficient number of logical test cases is correct. """
         mock_url_open.return_value = TEST_DESIGN_HTML
-        self.assertEqual(22, self.__birt.nr_user_stories_with_sufficient_ltcs())
+        self.assertEqual((22, []), self.__birt.nr_user_stories_with_sufficient_ltcs())
 
     @patch.object(logging, 'warning')
     def test_nr_user_stories_with_sufficient_ltcs_on_error(self, mock_warning, mock_url_open):
         """ Test that the number of user stories is -1 when Birt is unavailable. """
         mock_url_open.side_effect = urllib.error.URLError('Birt down')
-        self.assertEqual(-1, self.__birt.nr_user_stories_with_sufficient_ltcs())
+        self.assertEqual((-1, []), self.__birt.nr_user_stories_with_sufficient_ltcs())
         mock_warning.assert_called_once()
 
     def test_nr_automated_ltcs(self, mock_url_open):
         """ Test the number of automated logical test cases is correct. """
         mock_url_open.return_value = TEST_DESIGN_HTML
-        self.assertEqual(111, self.__birt.nr_automated_ltcs())
+        self.assertEqual((111, []), self.__birt.nr_automated_ltcs())
 
     @patch.object(logging, 'warning')
     def test_nr_automated_ltcs_on_error(self, mock_warning, mock_url_open):
         """ Test that the number of automated logical test cases is -1 when Birt is unavailable. """
         mock_url_open.side_effect = urllib.error.URLError('Birt down')
-        self.assertEqual(-1, self.__birt.nr_automated_ltcs())
+        self.assertEqual((-1, []), self.__birt.nr_automated_ltcs())
         mock_warning.assert_called_once()
 
     def test_nr_user_stories(self, mock_url_open):
         """ Test that the number of user stories is correct. """
         mock_url_open.return_value = TEST_DESIGN_HTML
-        self.assertEqual(23, self.__birt.nr_user_stories())
+        self.assertEqual((23, []), self.__birt.nr_user_stories())
 
     def test_reviewed_user_stories(self, mock_url_open):
         """ Test that the number of reviewed user stories is correct. """
         mock_url_open.return_value = TEST_DESIGN_HTML
-        self.assertEqual(23, self.__birt.reviewed_user_stories())
+        self.assertEqual((23, []), self.__birt.reviewed_user_stories())
 
     def test_approved_user_stories(self, mock_url_open):
         """ Test that the number of approved user stories is correct. """
         mock_url_open.return_value = TEST_DESIGN_HTML
-        self.assertEqual(23, self.__birt.approved_user_stories())
+        self.assertEqual((23, []), self.__birt.approved_user_stories())
 
     def test_not_approved_user_stories(self, mock_url_open):
         """ Test that the number of not approved user stories is correct. """
@@ -124,17 +124,17 @@ class BirtTest(unittest.TestCase):
     def test_nr_ltcs(self, mock_url_open):
         """ Test that the number of logical test cases is correct. """
         mock_url_open.return_value = TEST_DESIGN_HTML
-        self.assertEqual(182, self.__birt.nr_ltcs())
+        self.assertEqual((182, []), self.__birt.nr_ltcs())
 
     def test_reviewed_ltcs(self, mock_url_open):
         """ Test that the number of reviewed logical test cases is correct. """
         mock_url_open.return_value = TEST_DESIGN_HTML
-        self.assertEqual(182, self.__birt.reviewed_ltcs())
+        self.assertEqual((182, []), self.__birt.reviewed_ltcs())
 
     def test_approved_ltcs(self, mock_url_open):
         """ Test that the number of approved logical test cases is correct. """
         mock_url_open.return_value = TEST_DESIGN_HTML
-        self.assertEqual(182, self.__birt.approved_ltcs())
+        self.assertEqual((182, []), self.__birt.approved_ltcs())
 
     def test_not_approved_ltcs(self, mock_url_open):
         """ Test that the number of not approved logical test cases is correct. """
@@ -144,18 +144,18 @@ class BirtTest(unittest.TestCase):
     def test_nr_ltcs_to_be_automated(self, mock_url_open):
         """ Test that the number of logical test cases to be automated is correct. """
         mock_url_open.return_value = TEST_DESIGN_HTML
-        self.assertEqual(165, self.__birt.nr_ltcs_to_be_automated())
+        self.assertEqual((165, []), self.__birt.nr_ltcs_to_be_automated())
 
     def test_nr_manual_ltcs(self, mock_url_open):
         """ Test that the number of manual logical test cases is correct. """
         mock_url_open.return_value = MANUAL_TEST_EXECUTION_HTML
-        self.assertEqual(3, self.__birt.nr_manual_ltcs('bulk'))
+        self.assertEqual((3, []), self.__birt.nr_manual_ltcs('bulk'))
 
     @patch.object(logging, 'warning')
     def test_nr_manual_ltcs_on_error(self, mock_warning, mock_url_open):
         """ Test that the number of manual logical test cases is -1 when Birt is not available. """
         mock_url_open.side_effect = urllib.error.URLError('Birt down')
-        self.assertEqual(-1, self.__birt.nr_manual_ltcs('bulk'))
+        self.assertEqual((-1, []), self.__birt.nr_manual_ltcs('bulk'))
         mock_warning.assert_called_once()
 
     def test_nr_manual_ltcs_too_old(self, mock_url_open):
