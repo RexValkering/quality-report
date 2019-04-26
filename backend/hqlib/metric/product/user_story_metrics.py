@@ -39,7 +39,7 @@ class UserStoryMetric(LowerIsBetterMetric):
 
     def _user_stories(self) -> Tuple[int, List[str]]:
         """ Return the total number of user stories. """
-        return self._metric_source.nr_user_stories() if self._metric_source else (-1, None)
+        return self._metric_source.nr_user_stories() if self._metric_source else (-1, [])
 
     def _parameters(self) -> MetricParameters:
         # pylint: disable=protected-access
@@ -58,7 +58,7 @@ class UserStoriesNotReviewed(UserStoryMetric):
     low_target_value = 5
 
     def _nr_user_stories_ok(self) -> Tuple[int, List[str]]:
-        return self._metric_source.reviewed_user_stories() if self._metric_source else (-1, None)
+        return self._metric_source.reviewed_user_stories() if self._metric_source else (-1, [])
 
 
 class UserStoriesNotApproved(UserStoryMetric):
@@ -71,11 +71,11 @@ class UserStoriesNotApproved(UserStoryMetric):
     low_target_value = 3
 
     def _nr_user_stories_ok(self) -> Tuple[int, List[str]]:
-        return self._metric_source.approved_user_stories() if self._metric_source else (-1, None)
+        return self._metric_source.approved_user_stories() if self._metric_source else (-1, [])
 
     def _user_stories(self) -> Tuple[int, List[str]]:
         """ Override the total number of user stories. """
-        return self._metric_source.reviewed_user_stories() if self._metric_source else (-1, None)
+        return self._metric_source.reviewed_user_stories() if self._metric_source else (-1, [])
 
 
 class UserStoriesWithTooFewLogicalTestCases(UserStoryMetric):
@@ -88,4 +88,4 @@ class UserStoriesWithTooFewLogicalTestCases(UserStoryMetric):
     low_target_value = 5
 
     def _nr_user_stories_ok(self) -> Tuple[int, List[str]]:
-        return self._metric_source.nr_user_stories_with_sufficient_ltcs() if self._metric_source else (-1, None)
+        return self._metric_source.nr_user_stories_with_sufficient_ltcs() if self._metric_source else (-1, [])
