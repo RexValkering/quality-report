@@ -49,15 +49,49 @@ class Sonar(metric_source.TestReport):
     suppression_rules = ("squid:NoSonar", "csharpsquid:S1309", "squid:S1309", "squid:S1310", "squid:S1315",
                          "Pylint:I0011", "Pylint:I0020")
 
+    _base_dashboard_url = ''
+    _base_violations_url = ''
+    _suppressions_url = ''
+    _violations_type_severity_url = ''
+    _issues_api_url = ''
+    _issues_by_type_api_url = ''
+    _issues_by_type_and_severity_api_url = ''
+    _analyses_api_url = ''
+    _components_show_api_url = ''
+    _components_search_api_url = ''
+    _resource_api_url = ''
+    _projects_api_url = ''
+    _measures_api_url = ''
+    _false_positives_api_url = ''
+    _false_positives_url = ''
+    _wont_fix_api_url = ''
+    _wont_fix_url = ''
+    _plugin_api_url = ''
+    _quality_profiles_api_url = ''
+    _old_quality_profiles_api_url = ''
+
     def __init__(self, sonar_url: str, *args, **kwargs) -> None:
         self._url_opener = \
             url_opener.UrlOpener(username=kwargs.get("username", ""), password=kwargs.get("password", ""))
+        self._organization = kwargs.pop("organization", "")
+
         super().__init__(url=sonar_url, *args, **kwargs)
 
         self._version_number_url = sonar_url + 'api/server/version'
 
         version_number = LooseVersion(self.version_number()) if self.version_number() else None
         self.__stuff_right_sonar_version_class(version_number, sonar_url)
+
+    def _init_from_facade(self, sonar_url: str):
+        urls = self._get_sonar_urls(sonar_url)
+        for key, url in urls.items():
+            if self._organization and 'api_url' in key and '?' in url:
+                setattr(self, key, url + '&organization={}'.format(self._organization))
+            else:
+                setattr(self, key, url)
+
+    def _get_sonar_urls(self, sonar_url: str):
+        return {}
 
     def __stuff_right_sonar_version_class(self, version_number: LooseVersion, sonar_url: str):
 
@@ -122,37 +156,31 @@ class Sonar6(Sonar):
             and self.is_branch_plugin_installed() \
             and self.is_component_absent(product)
 
-    def _init_from_facade(self, sonar_url: str):
-
-        # pylint: disable=attribute-defined-outside-init
-        # pylint: disable=invalid-name
-
-        self._base_dashboard_url = sonar_url + 'dashboard?id={project}'
-        self._base_violations_url = sonar_url + 'issues/search#resolved=false|componentRoots={component}'
-        self._suppressions_url = sonar_url + f"issues/search#rules={','.join(self.suppression_rules)}" + \
-            "|componentRoots={component}"
-        self._violations_type_severity_url = sonar_url + \
-            'project/issues?id={component}&resolved=false&types={type}&severities={severities}'
-        self._issues_api_url = sonar_url + 'api/issues/search?componentRoots={component}&resolved=false&rules={rule}'
-        self._issues_by_type_api_url = sonar_url + \
-            'api/issues/search?componentRoots={component}&resolved=false&types={type}'
-        self._issues_by_type_and_severity_api_url = sonar_url + \
-            'api/issues/search?componentRoots={component}&resolved=false&types={type}&severities={severities}'
-        self._analyses_api_url = sonar_url + 'api/project_analyses/search?project={project}&format=json&ps=1'
-        self._components_show_api_url = sonar_url + 'api/components/show?component={component}'
-        self._components_search_api_url = sonar_url + 'api/components/search?qualifiers=BRC,TRK&q={component}'
-        self._resource_api_url = sonar_url + 'api/resources?resource={resource}&format=json'
-        self._projects_api_url = sonar_url + 'api/projects/index?subprojects=true'
-        self._measures_api_url = sonar_url + 'api/measures/component?componentKey={component}&metricKeys={metric}'
-        self._false_positives_api_url = sonar_url + \
-            'api/issues/search?resolutions=FALSE-POSITIVE&componentRoots={resource}'
-        self._false_positives_url = sonar_url + 'issues/search#resolutions=FALSE-POSITIVE|componentRoots={resource}'
-        self._wont_fix_api_url = sonar_url + 'api/issues/search?resolutions=WONTFIX&componentRoots={resource}'
-        self._wont_fix_url = sonar_url + 'issues/search#resolutions=WONTFIX|componentRoots={resource}'
-        self._plugin_api_url = sonar_url + 'api/updatecenter/installed_plugins?format=json'
-        self._quality_profiles_api_url = sonar_url + 'api/qualityprofiles/search?format=json'
-        self._old_quality_profiles_api_url = sonar_url + 'api/profiles/list?format=json'
+    def _get_sonar_urls(self, sonar_url: str):
+        """Returns a list of SonarQube instance specific urls."""
         logging.info("Sonar class instantiated as Sonar6.")
+        return {
+            '_base_dashboard_url': sonar_url + 'dashboard?id={project}',
+            '_base_violations_url': sonar_url + 'issues/search#resolved=false|componentRoots={component}',
+            '_suppressions_url': sonar_url + f"issues/search#rules={','.join(self.suppression_rules)}" + "|componentRoots={component}",
+            '_violations_type_severity_url': sonar_url + 'project/issues?id={component}&resolved=false&types={type}&severities={severities}',
+            '_issues_api_url': sonar_url + 'api/issues/search?componentRoots={component}&resolved=false&rules={rule}',
+            '_issues_by_type_api_url': sonar_url + 'api/issues/search?componentRoots={component}&resolved=false&types={type}',
+            '_issues_by_type_and_severity_api_url': sonar_url + 'api/issues/search?componentRoots={component}&resolved=false&types={type}&severities={severities}',
+            '_analyses_api_url': sonar_url + 'api/project_analyses/search?project={project}&format=json&ps=1',
+            '_components_show_api_url': sonar_url + 'api/components/show?component={component}',
+            '_components_search_api_url': sonar_url + 'api/components/search?qualifiers=BRC,TRK&q={component}',
+            '_resource_api_url': sonar_url + 'api/resources?resource={resource}&format=json',
+            '_projects_api_url': sonar_url + 'api/projects/index?subprojects=true',
+            '_measures_api_url': sonar_url + 'api/measures/component?componentKey={component}&metricKeys={metric}',
+            '_false_positives_api_url': sonar_url + 'api/issues/search?resolutions=FALSE-POSITIVE&componentRoots={resource}',
+            '_false_positives_url': sonar_url + 'issues/search#resolutions=FALSE-POSITIVE|componentRoots={resource}',
+            '_wont_fix_api_url': sonar_url + 'api/issues/search?resolutions=WONTFIX&componentRoots={resource}',
+            '_wont_fix_url': sonar_url + 'issues/search#resolutions=WONTFIX|componentRoots={resource}',
+            '_plugin_api_url': sonar_url + 'api/updatecenter/installed_plugins?format=json',
+            '_quality_profiles_api_url': sonar_url + 'api/qualityprofiles/search?format=json',
+            '_old_quality_profiles_api_url': sonar_url + 'api/profiles/list?format=json',
+        }
 
     # Coverage report API
 
@@ -694,34 +722,28 @@ class Sonar7(Sonar6):
 
     metric_source_name = 'SonarQube'
 
-    def _init_from_facade(self, sonar_url: str):
+    def _get_sonar_urls(self, sonar_url: str):
 
-        # pylint: disable=attribute-defined-outside-init
-        # pylint: disable=invalid-name
-
-        self._base_dashboard_url = sonar_url + 'dashboard?id={project}'
-        self._base_violations_url = sonar_url + 'project/issues?id={component}&resolved=false'
-        self._suppressions_url = sonar_url + "project/issues?id={component}&" + \
-            f"rules={','.join(self.suppression_rules)}"
-        self._violations_type_severity_url = sonar_url + \
-            'project/issues?id={component}&resolved=false&types={type}&severities={severities}'
-        self._issues_api_url = sonar_url + 'api/issues/search?componentKeys={component}&resolved=false&rules={rule}'
-        self._issues_by_type_api_url = sonar_url + \
-            'api/issues/search?componentKeys={component}&resolved=false&types={type}'
-        self._issues_by_type_and_severity_api_url = sonar_url + \
-            'api/issues/search?componentKeys={component}&resolved=false&types={type}&severities={severities}'
-        self._analyses_api_url = sonar_url + 'api/project_analyses/search?project={project}&format=json&ps=1'
-        self._components_show_api_url = sonar_url + 'api/components/show?component={component}'
-        self._components_search_api_url = sonar_url + 'api/components/search?qualifiers=BRC,TRK&q={component}'
-        self._measures_api_url = sonar_url + 'api/measures/component?component={component}&metricKeys={metric}'
-        self._false_positives_api_url = sonar_url + \
-            'api/issues/search?resolutions=FALSE-POSITIVE&componentKeys={resource}'
-        self._false_positives_url = sonar_url + 'project/issues?id={resource}&resolutions=FALSE-POSITIVE'
-        self._wont_fix_api_url = sonar_url + 'api/issues/search?resolutions=WONTFIX&componentKeys={resource}'
-        self._wont_fix_url = sonar_url + 'project/issues?id={resource}&resolutions=WONTFIX'
-        self._plugin_api_url = sonar_url + 'api/plugins/installed'
-        self._quality_profiles_api_url = sonar_url + 'api/qualityprofiles/search?format=json'
         logging.info("Sonar class instantiated as Sonar7.")
+        return {
+            '_base_dashboard_url': sonar_url + 'dashboard?id={project}',
+            '_base_violations_url': sonar_url + 'project/issues?id={component}&resolved=false',
+            '_suppressions_url': sonar_url + "project/issues?id={component}&" + f"rules={','.join(self.suppression_rules)}",
+            '_violations_type_severity_url': sonar_url + 'project/issues?id={component}&resolved=false&types={type}&severities={severities}',
+            '_issues_api_url': sonar_url + 'api/issues/search?componentKeys={component}&resolved=false&rules={rule}',
+            '_issues_by_type_api_url': sonar_url + 'api/issues/search?componentKeys={component}&resolved=false&types={type}',
+            '_issues_by_type_and_severity_api_url': sonar_url + 'api/issues/search?componentKeys={component}&resolved=false&types={type}&severities={severities}',
+            '_analyses_api_url': sonar_url + 'api/project_analyses/search?project={project}&format=json&ps=1',
+            '_components_show_api_url': sonar_url + 'api/components/show?component={component}',
+            '_components_search_api_url': sonar_url + 'api/components/search?qualifiers=BRC,TRK&q={component}',
+            '_measures_api_url': sonar_url + 'api/measures/component?component={component}&metricKeys={metric}',
+            '_false_positives_api_url': sonar_url + 'api/issues/search?resolutions=FALSE-POSITIVE&componentKeys={resource}',
+            '_false_positives_url': sonar_url + 'project/issues?id={resource}&resolutions=FALSE-POSITIVE',
+            '_wont_fix_api_url': sonar_url + 'api/issues/search?resolutions=WONTFIX&componentKeys={resource}',
+            '_wont_fix_url': sonar_url + 'project/issues?id={resource}&resolutions=WONTFIX',
+            '_plugin_api_url': sonar_url + 'api/plugins/installed',
+            '_quality_profiles_api_url': sonar_url + 'api/qualityprofiles/search?format=json'
+        }
 
     def is_branch_name_included(self, product: str) -> bool:
         """ Checks if the component name includes the branch name. """

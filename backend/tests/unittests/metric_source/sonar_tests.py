@@ -111,6 +111,24 @@ class SonarFacadeTest(unittest.TestCase):
         self.assertEqual(None, Sonar('unimportant').version_number())
         mock_warning.assert_called_once_with("Error retrieving Sonar Qube server version!")
 
+    @patch.object(Sonar, 'version_number')
+    def test_organization(self, mock_version_number):
+        """Test that the organization key is appended when supplied."""
+        mock_version_number.return_value = '7.0'
+
+        sonar = Sonar('unimportant', organization='ictu')
+        self.assertIsNotNone(sonar)
+        self.assertIn('organization=ictu', sonar._issues_api_url)
+
+    @patch.object(Sonar, 'version_number')
+    def test_no_organization(self, mock_version_number):
+        """Test that the organization key is missing when not supplied."""
+        mock_version_number.return_value = '7.0'
+        
+        sonar = Sonar('unimportant')
+        self.assertIsNotNone(sonar)
+        self.assertNotIn('organization=', sonar._issues_api_url)
+
 
 class Sonar6PublicMethodsTest(unittest.TestCase):
     """ Test methods of Sonar6 that do not need url mocking """
