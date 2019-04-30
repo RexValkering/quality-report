@@ -100,7 +100,8 @@ class SonarFacadeTest(unittest.TestCase):
         """ Test that the version number is correct. """
         mock_url_read.return_value = "5.6"
         self.assertEqual('5.6', Sonar('unimportant').version_number())
-        self.assertEqual(call("Sonar Qube server version retrieved: %s", '5.6'), mock_info.call_args_list[0])
+        self.assertEqual(call("Sonar Qube server version retrieved: %s", '5.6'),
+                         mock_info.call_args_list[0])
         self.assertEqual(call('Sonar class instantiated as Sonar6.'), mock_info.call_args_list[1])
 
     @patch.object(url_opener.UrlOpener, 'url_read')
@@ -118,16 +119,16 @@ class SonarFacadeTest(unittest.TestCase):
 
         sonar = Sonar('unimportant', organization='ictu')
         self.assertIsNotNone(sonar)
-        self.assertIn('organization=ictu', sonar._issues_api_url)
+        self.assertIn('organization=ictu', sonar._issues_api_url) # pylint: disable=protected-access
 
     @patch.object(Sonar, 'version_number')
     def test_no_organization(self, mock_version_number):
         """Test that the organization key is missing when not supplied."""
         mock_version_number.return_value = '7.0'
-        
+
         sonar = Sonar('unimportant')
         self.assertIsNotNone(sonar)
-        self.assertNotIn('organization=', sonar._issues_api_url)
+        self.assertNotIn('organization=', sonar._issues_api_url) # pylint: disable=protected-access
 
 
 class Sonar6PublicMethodsTest(unittest.TestCase):

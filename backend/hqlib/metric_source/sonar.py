@@ -90,7 +90,7 @@ class Sonar(metric_source.TestReport):
             else:
                 setattr(self, key, url)
 
-    def _get_sonar_urls(self, sonar_url: str):
+    def _get_sonar_urls(self, sonar_url: str): #pylint: disable=no-self-use,unused-argument
         return {}
 
     def __stuff_right_sonar_version_class(self, version_number: LooseVersion, sonar_url: str):
@@ -162,18 +162,23 @@ class Sonar6(Sonar):
         return {
             '_base_dashboard_url': sonar_url + 'dashboard?id={project}',
             '_base_violations_url': sonar_url + 'issues/search#resolved=false|componentRoots={component}',
-            '_suppressions_url': sonar_url + f"issues/search#rules={','.join(self.suppression_rules)}" + "|componentRoots={component}",
-            '_violations_type_severity_url': sonar_url + 'project/issues?id={component}&resolved=false&types={type}&severities={severities}',
+            '_suppressions_url': sonar_url + f"issues/search#rules={','.join(self.suppression_rules)}" + \
+                "|componentRoots={component}",
+            '_violations_type_severity_url': sonar_url + 'project/issues?id={component}&resolved=false' + \
+                '&types={type}&severities={severities}',
             '_issues_api_url': sonar_url + 'api/issues/search?componentRoots={component}&resolved=false&rules={rule}',
-            '_issues_by_type_api_url': sonar_url + 'api/issues/search?componentRoots={component}&resolved=false&types={type}',
-            '_issues_by_type_and_severity_api_url': sonar_url + 'api/issues/search?componentRoots={component}&resolved=false&types={type}&severities={severities}',
+            '_issues_by_type_api_url': sonar_url + 'api/issues/search?componentRoots={component}&resolved=false' + \
+                '&types={type}',
+            '_issues_by_type_and_severity_api_url': sonar_url + 'api/issues/search?componentRoots={component}' + \
+                '&resolved=false&types={type}&severities={severities}',
             '_analyses_api_url': sonar_url + 'api/project_analyses/search?project={project}&format=json&ps=1',
             '_components_show_api_url': sonar_url + 'api/components/show?component={component}',
             '_components_search_api_url': sonar_url + 'api/components/search?qualifiers=BRC,TRK&q={component}',
             '_resource_api_url': sonar_url + 'api/resources?resource={resource}&format=json',
             '_projects_api_url': sonar_url + 'api/projects/index?subprojects=true',
             '_measures_api_url': sonar_url + 'api/measures/component?componentKey={component}&metricKeys={metric}',
-            '_false_positives_api_url': sonar_url + 'api/issues/search?resolutions=FALSE-POSITIVE&componentRoots={resource}',
+            '_false_positives_api_url': sonar_url + 'api/issues/search?resolutions=FALSE-POSITIVE' + \
+                '&componentRoots={resource}',
             '_false_positives_url': sonar_url + 'issues/search#resolutions=FALSE-POSITIVE|componentRoots={resource}',
             '_wont_fix_api_url': sonar_url + 'api/issues/search?resolutions=WONTFIX&componentRoots={resource}',
             '_wont_fix_url': sonar_url + 'issues/search#resolutions=WONTFIX|componentRoots={resource}',
@@ -728,16 +733,21 @@ class Sonar7(Sonar6):
         return {
             '_base_dashboard_url': sonar_url + 'dashboard?id={project}',
             '_base_violations_url': sonar_url + 'project/issues?id={component}&resolved=false',
-            '_suppressions_url': sonar_url + "project/issues?id={component}&" + f"rules={','.join(self.suppression_rules)}",
-            '_violations_type_severity_url': sonar_url + 'project/issues?id={component}&resolved=false&types={type}&severities={severities}',
+            '_suppressions_url': sonar_url + "project/issues?id={component}&" + \
+                f"rules={','.join(self.suppression_rules)}",
+            '_violations_type_severity_url': sonar_url + 'project/issues?id={component}&resolved=false' + \
+                '&types={type}&severities={severities}',
             '_issues_api_url': sonar_url + 'api/issues/search?componentKeys={component}&resolved=false&rules={rule}',
-            '_issues_by_type_api_url': sonar_url + 'api/issues/search?componentKeys={component}&resolved=false&types={type}',
-            '_issues_by_type_and_severity_api_url': sonar_url + 'api/issues/search?componentKeys={component}&resolved=false&types={type}&severities={severities}',
+            '_issues_by_type_api_url': sonar_url + 'api/issues/search?componentKeys={component}&resolved=false' + \
+                '&types={type}',
+            '_issues_by_type_and_severity_api_url': sonar_url + 'api/issues/search?componentKeys={component}' + \
+                '&resolved=false&types={type}&severities={severities}',
             '_analyses_api_url': sonar_url + 'api/project_analyses/search?project={project}&format=json&ps=1',
             '_components_show_api_url': sonar_url + 'api/components/show?component={component}',
             '_components_search_api_url': sonar_url + 'api/components/search?qualifiers=BRC,TRK&q={component}',
             '_measures_api_url': sonar_url + 'api/measures/component?component={component}&metricKeys={metric}',
-            '_false_positives_api_url': sonar_url + 'api/issues/search?resolutions=FALSE-POSITIVE&componentKeys={resource}',
+            '_false_positives_api_url': sonar_url + 'api/issues/search?resolutions=FALSE-POSITIVE' + \
+                '&componentKeys={resource}',
             '_false_positives_url': sonar_url + 'project/issues?id={resource}&resolutions=FALSE-POSITIVE',
             '_wont_fix_api_url': sonar_url + 'api/issues/search?resolutions=WONTFIX&componentKeys={resource}',
             '_wont_fix_url': sonar_url + 'project/issues?id={resource}&resolutions=WONTFIX',
