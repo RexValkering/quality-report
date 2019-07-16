@@ -128,7 +128,7 @@ class MetricsFormatter(base_formatter.Formatter):
     def metric(self, metric: Metric) -> str:
         data = self.__metric_data(metric)
         metric_number = int(data['metric_id'].split('-')[1])
-        data['metric_number'] = '{sec}-{num:02d}'.format(sec=data['section'], num=metric_number)
+        data['metric_number'] = '{sec}-{num:03d}'.format(sec=data['section'], num=metric_number)
         return self.columns.format(**data)
 
     def __metric_data(self, metric: Metric) -> Dict[str, Any]:
