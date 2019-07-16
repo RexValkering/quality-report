@@ -20,7 +20,8 @@ import {EMOJI_CHARS, EMOJI_IMAGES} from 'emoji.js';
 
 class MetricsTable extends React.Component {
     sparkline(metric) {
-        return <img width="100px" height="25px" src={"chart/" + metric["id_format"] + ".svg"}/>;
+        return '';
+        // return <img width="100px" height="25px" src={"chart/" + metric["id_format"] + ".svg"}/>;
     }
 
     bgColorClassName(metric) {

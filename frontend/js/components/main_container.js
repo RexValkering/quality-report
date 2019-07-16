@@ -19,6 +19,7 @@ import {DashboardTable} from 'components/dashboard_table.js';
 import {MetricsSections} from 'components/metrics_sections.js';
 import {TrendGraphs} from 'components/trend_graphs.js';
 import {Help} from 'components/help.js';
+import {Dependencies} from 'components/dependencies.js';
 import {format_date_time} from 'utils.js';
 
 
@@ -61,6 +62,7 @@ class Footer extends React.Component {
         const report_date_time = format_date_time(...this.props.report_date);
         return (
             <footer className="text-center">
+                <span>*Informatie over huidige en laatste versies van losse dll's kan afwijken van de werkelijkheid.</span>
                 <hr />
                 <span>{this.props.report_title}, {report_date_time}</span>
                 <br />
@@ -79,7 +81,8 @@ class MainContainer extends React.Component {
                                   show_one_table={this.props.show_one_table}
                                   on_hide_metric={this.props.on_hide_metric} />,
             trend_tab: <TrendGraphs />,
-            help_tab: <Help hq_version={this.props.metrics_data["hq_version"]} />
+            help_tab: <Help hq_version={this.props.metrics_data["hq_version"]} />,
+            dependency_tab: <Dependencies />
         };
         return (
             <div className="container-fluid">

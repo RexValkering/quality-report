@@ -28,6 +28,7 @@ class MetricsSection extends React.Component {
                         <small className="align-top">
                             <LastBuiltLabel latest_change_date={this.props.latest_change_date}/>
                         </small>
+                        <a href={"/sheets/Analyse Technische Staat " + this.props.title + ".xlsx"} className="btn btn-primary ml-4" style={{marginTop: '-5px'}}>Download technische sheet</a>
                     </h1>
                 </div>
                 <div className="metric_table" id={"table_" + this.props.section}>

@@ -109,6 +109,16 @@ class HelpMenu extends React.Component {
     }
 }
 
+class DependencyMenu extends React.Component {
+    render() {
+        return (
+            <Menu id="dependency_tab_menu" title="Dependencies" hide={this.props.tab !== 'dependency_tab'}>
+                <MenuItem href="dependency_table" title="Lijst van dependencies" />
+            </Menu>
+        );
+    }
+}
+
 class Search extends React.Component {
     constructor(props) {
         super(props);
@@ -152,6 +162,10 @@ class Menus extends React.Component {
                 <NavItem id="help_tab" onClick={this.props.on_tab} title="Help"
                           hide={this.props.tab === 'help_tab'} />
                 <HelpMenu tab={this.props.tab} />
+                <NavItem id="dependency_tab" onClick={this.props.on_tab} title="Dependencies"
+                          hide={this.props.tab === 'dependency_tab'} />
+                <DependencyMenu tab={this.props.tab} />
+                <li class="nav-item mr-2"><a class="nav-link" href="/matrix.csv">Matrix</a></li>
             </div>
         );
     }
