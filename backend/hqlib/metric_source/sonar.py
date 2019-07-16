@@ -28,8 +28,52 @@ from .. import utils, metric_source
 from ..typing import DateTime, Number
 
 
+def multiple_products_decorator(func):
+    """ Checks if products is a list and handles summation/averaging. """
+    def decorator(self, product: str, *args, **kwargs):
+
+        def is_convertible_to_int(value):
+            try:
+                int(value)
+                return True
+            except:
+                return False
+
+        def is_convertible_to_float(value):
+            try:
+                int(value)
+                return True
+            except:
+                return False
+
+        # Don't do anything if there is no comma in the SonarCloud project
+        if ',' not in product:
+            return func(self, product, *args, *kwargs)
+
+        # Retrieve all results and filter undefineds
+        products = product.split(',')
+        results = list(filter(lambda x: x != -1,
+                              [func(self, p, *args, **kwargs) for p in products]))
+
+        # Return undefined if there are no discernable results
+        if not results:
+            return -1
+
+        # If we're not dealing with a list of floats or ints, we don't know how to handle this.
+        # Return the first result.
+        if not all([is_convertible_to_float(x) for x in results]):
+            return results[0]
+
+        if results:
+            if isinstance(results[0], float) or (results[0] and not is_convertible_to_int(results[0])):
+                return sum([float(x) for x in results]) / len(results)
+        return sum([int(x) for x in results])
+
+    return decorator
+
 def extract_branch_decorator(func):
     """ Checks if product name has to be splitted into product and branch and performs the splitting."""
+    @multiple_products_decorator
     def _branch_param(self, product: str, *args, **kwargs) -> (str, str):
         """ Return the branch url parameter. """
         if self.is_branch_name_included(product):
