@@ -19,7 +19,6 @@ import {DashboardTable} from 'components/dashboard_table.js';
 import {MetricsSections} from 'components/metrics_sections.js';
 import {TrendGraphs} from 'components/trend_graphs.js';
 import {Help} from 'components/help.js';
-import {Dependencies} from 'components/dependencies.js';
 import {format_date_time} from 'utils.js';
 
 
