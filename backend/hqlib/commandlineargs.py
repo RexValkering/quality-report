@@ -35,4 +35,5 @@ def parse() -> Namespace:
     parser.add_argument('--frontend', default="yes", choices=['yes', 'no'],
                         help="should backend process also build the frontend? (default: yes)")
     parser.add_argument('--version', action='version', version=hqlib.VERSION)
+    parser.add_argument('--branch')
     return parser.parse_args()
