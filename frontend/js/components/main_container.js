@@ -80,8 +80,7 @@ class MainContainer extends React.Component {
                                   show_one_table={this.props.show_one_table}
                                   on_hide_metric={this.props.on_hide_metric} />,
             trend_tab: <TrendGraphs />,
-            help_tab: <Help hq_version={this.props.metrics_data["hq_version"]} />,
-            dependency_tab: <Dependencies />
+            help_tab: <Help hq_version={this.props.metrics_data["hq_version"]} />
         };
         return (
             <div className="container-fluid">
