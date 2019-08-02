@@ -16,6 +16,7 @@
 import React from 'react';
 
 import {NavBar} from 'components/navbar.js';
+import {Notifications} from 'components/notifications.js';
 import {MainContainer} from 'components/main_container.js';
 import {Loader} from 'widgets/loader.js';
 import {EMOJI_CHARS} from 'emoji.js';
@@ -226,6 +227,7 @@ class App extends React.Component {
                             filter={this.state.filter}
                             on_search={this.onSearch} on_search_reset={this.onSearchReset}
                             on_filter={this.onFilter} />
+                    <Notifications />
                     <MainContainer metrics_data={this.state.metrics_data}
                                    metrics={this.state.metrics}
                                    show_one_table={this.state.show_one_table}
