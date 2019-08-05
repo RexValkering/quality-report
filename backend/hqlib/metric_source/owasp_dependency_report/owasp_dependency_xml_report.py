@@ -29,6 +29,12 @@ from ...typing import DateTime
 class OWASPDependencyXMLReport(owasp_dependency_report.OWASPDependencyReport):
     """ Class representing OWASP dependency reports in XML format. """
 
+    priority_lookup = {
+        'high': ('high', 'critical'),
+        'medium': ('medium', 'moderate', 'normal'),
+        'normal': ('medium', 'moderate', 'normal')
+    }
+
     def __init__(self, **kwargs) -> None:
         self._url_opener = url_opener.UrlOpener(**kwargs)
         super().__init__()
@@ -75,8 +81,11 @@ class OWASPDependencyXMLReport(owasp_dependency_report.OWASPDependencyReport):
 
     def _nr_warnings(self, metric_source_id: str, priority: str) -> int:
         """ Return the number of warnings for the specified priority in the report. """
-        if priority == 'normal':
-            priority = 'medium'
+
+        if priority not in self.priority_lookup:
+            logging.error('Unknown priority: %s. Acceptable priorities are normal, medium and high.')
+        priorities = self.priority_lookup[priority]
+
         try:
             root, namespace = self.__report_root(metric_source_id)
         except url_opener.UrlOpener.url_open_exceptions:
@@ -86,10 +95,10 @@ class OWASPDependencyXMLReport(owasp_dependency_report.OWASPDependencyReport):
             return -1
 
         dependencies = root.findall(".//{{{ns}}}dependency".format(ns=namespace))
-        return len(self.__vulnerable_dependencies(dependencies, priority, namespace))
+        return len(self.__vulnerable_dependencies(dependencies, priorities, namespace))
 
     @staticmethod
-    def __vulnerable_dependencies(dependencies, priority, namespace):
+    def __vulnerable_dependencies(dependencies, priorities, namespace):
         """ Return the vulnerable dependencies. """
         severity_xpath = ".//{{{ns}}}vulnerability/{{{ns}}}severity".format(ns=namespace)
         file_path_xpath = "./{{{ns}}}filePath".format(ns=namespace)
@@ -102,7 +111,7 @@ class OWASPDependencyXMLReport(owasp_dependency_report.OWASPDependencyReport):
             # Collect severity nodes matching 'priority'
             relevant_severities = []
             for severity in severities:
-                if severity.text == priority.capitalize():
+                if severity.text.lower() in priorities:
                     relevant_severities.append(severity.text)
 
             # For nodes matching 'priority'; append filePath to vulnerable_dependencies
