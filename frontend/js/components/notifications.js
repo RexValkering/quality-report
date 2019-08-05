@@ -35,6 +35,20 @@ class Notifications extends React.Component {
             return null;
         } else {
             let messages = [];
+
+            let report_date_time = new Date(this.props.report_date_time[0], this.props.report_date_time[1] - 1,
+                                            this.props.report_date_time[2], this.props.report_date_time[3],
+                                            this.props.report_date_time[4])
+            var now = new Date();
+            var seconds = parseInt((now - report_date_time)/1000, 10);
+
+            // Add a warning if the report hasn't run for 26 hours.
+            if (seconds > 60 * 60 * 26) {
+                messages.push(
+                    <div className="alert alert-warning" role="alert">De scan is afgelopen nacht niet met succes afgerond. Bekijk de logbestanden op de server voor meer informatie.</div>
+                );
+            }
+
             this.state.notifications.forEach(function(notification, index) {
                 let classes = 'alert alert-' + notification.type
                 messages.push(
