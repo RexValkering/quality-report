@@ -227,7 +227,7 @@ class App extends React.Component {
                             filter={this.state.filter}
                             on_search={this.onSearch} on_search_reset={this.onSearchReset}
                             on_filter={this.onFilter} />
-                    <Notifications />
+                    <Notifications report_date_time={this.state.metrics_data["report_date"]}/>
                     <MainContainer metrics_data={this.state.metrics_data}
                                    metrics={this.state.metrics}
                                    show_one_table={this.state.show_one_table}
