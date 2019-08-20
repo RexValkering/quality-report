@@ -137,7 +137,8 @@ class OWASPDependencyXMLReport(owasp_dependency_report.OWASPDependencyReport):
             logging.error('Error parsing returned xml: %s.', reason)
             return datetime.datetime.min
         datetime_node = root.find(".//{{{ns}}}projectInfo/{{{ns}}}reportDate".format(ns=namespace))
-        return datetime.datetime.strptime(datetime_node.text.split('.')[0], "%Y-%m-%dT%H:%M:%S")
+        timestamp = datetime_node.text.split('.')[0][:19]
+        return datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
 
     @functools.lru_cache(maxsize=1024)
     def __report_root(self, report_url: str) -> Tuple[Any, str]:
